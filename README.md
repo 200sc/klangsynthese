@@ -7,3 +7,5 @@ This library is right now an idea. The goal of this library is to unify the foll
 - Creating waveforms (Sin, Square, Saw, ...)
 - Playing and Modifying audio samples
 - Creating Sequences of audio samples to play music
+
+The goal of this library is to support Windows, Darwin, and Linux.
