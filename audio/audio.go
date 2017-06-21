@@ -11,4 +11,5 @@ type Audio interface {
 	// Stop will stop an ongoing audio
 	Stop() error
 	Copy() Audio
+	GetEncoding() Encoding
 }

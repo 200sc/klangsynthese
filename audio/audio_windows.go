@@ -45,36 +45,29 @@ func init() {
 	}
 }
 
-func EncodeBytes(b []byte) (Audio, error) {
+// EncodeBytes converts an encoding to Audio
+func EncodeBytes(enc Encoding) (Audio, error) {
+	// An error here would be an error from init()
 	if err != nil {
 		return nil, err
 	}
 
-	// ???????????
-	// ??????????
-	// ?????????
-	// this is for wav!
-	// we need this to be universal!!!!
-	// ?????????
-	wf := dsound.WaveFormatEx{
-		FormatTag:      dsound.WAVE_FORMAT_PCM,
-		Channels:       Channels,
-		SamplesPerSec:  SampleRate,
-		BitsPerSample:  Bits,
-		BlockAlign:     Channels * Bits / 8,
-		AvgBytesPerSec: BytesPerSec,
-		ExtSize:        0,
-	}
-
-	buffdsc := dsound.BufferDesc{
-		// These flags cover everything we should ever want to do
-		Flags:       dsound.DSBCAPS_GLOBALFOCUS | dsound.DSBCAPS_GETCURRENTPOSITION2 | dsound.DSBCAPS_CTRLVOLUME | dsound.DSBCAPS_CTRLPAN | dsound.DSBCAPS_CTRLFREQUENCY | dsound.DSBCAPS_LOCDEFER,
-		Format:      &wf,
-		BufferBytes: uint32(len(b)),
-	}
-
 	// Create the object which stores the wav data in a playable format
-	dsbuff, err := ds.CreateSoundBuffer(&buffdsc)
+	blockAlign := enc.Channels * enc.Bits / 8
+	dsbuff, err := ds.CreateSoundBuffer(&dsound.BufferDesc{
+		// These flags cover everything we should ever want to do
+		Flags: dsound.DSBCAPS_GLOBALFOCUS | dsound.DSBCAPS_GETCURRENTPOSITION2 | dsound.DSBCAPS_CTRLVOLUME | dsound.DSBCAPS_CTRLPAN | dsound.DSBCAPS_CTRLFREQUENCY | dsound.DSBCAPS_LOCDEFER,
+		Format: &dsound.WaveFormatEx{
+			FormatTag:      dsound.WAVE_FORMAT_PCM,
+			Channels:       enc.Channels,
+			SamplesPerSec:  enc.SampleRate,
+			BitsPerSample:  enc.Bits,
+			BlockAlign:     blockAlign,
+			AvgBytesPerSec: enc.SampleRate * uint32(blockAlign),
+			ExtSize:        0,
+		},
+		BufferBytes: uint32(len(enc.Data)),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -82,30 +75,32 @@ func EncodeBytes(b []byte) (Audio, error) {
 	// Reserve some space in the sound buffer object to write to.
 	// The Lock function (and by extension LockBytes) actually
 	// reserves two spaces, but we ignore the second.
-	by1, by2, err := dsbuff.LockBytes(0, uint32(len(b)), 0)
+	by1, by2, err := dsbuff.LockBytes(0, uint32(len(enc.Data)), 0)
 	if err != nil {
 		return nil, err
 	}
 
 	// Write to the pointer we were given.
-	copy(by1, b)
+	copy(by1, enc.Data)
 
 	// Update the buffer object with the new data.
 	err = dsbuff.UnlockBytes(by1, by2)
 	if err != nil {
 		return nil, err
 	}
-
-	return &dsAudio{dsbuff, 0}, nil
+	return &dsAudio{
+		Encoding:           enc,
+		IDirectSoundBuffer: dsbuff,
+	}, nil
 }
 
 type dsAudio struct {
+	Encoding
 	*dsound.IDirectSoundBuffer
 	flags dsound.BufferPlayFlag
 }
 
 func (ds *dsAudio) Play() <-chan error {
-	//... ???
 	ch := make(chan error)
 	go func(dsbuff *dsound.IDirectSoundBuffer, flags dsound.BufferPlayFlag, ch chan error) {
 		err := dsbuff.SetCurrentPosition(0)
@@ -131,6 +126,10 @@ func (ds *dsAudio) Stop() error {
 	return ds.IDirectSoundBuffer.SetCurrentPosition(0)
 }
 
-func (ds *dsAudio) Copy() *dsAudio {
-
+func (ds *dsAudio) Filter(fs ...Filter) Audio {
+	var a Audio = ds
+	for _, f := range fs {
+		a = f(a)
+	}
+	return a
 }

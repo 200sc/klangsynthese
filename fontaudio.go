@@ -1,5 +1,7 @@
 package klangsynthese
 
+import "github.com/200sc/klangsynthese/audio"
+
 // FontAudio is an ease-of-use wrapper around an audio
 // with an attached font, so that the audio can be played
 // with .Play() but can take in the remotely variable
@@ -14,13 +16,13 @@ package klangsynthese
 // more or less equivalent to whatever those names would be.
 type FontAudio struct {
 	Font
-	Audio
+	audio.Audio
 }
 
 // NewFontAudio returns a *FontAudio.
 // For preparation against API changes, using NewFontAudio over FontAudio{}
 // is recommended.
-func NewFontAudio(f Font, a Audio) *FontAudio {
+func NewFontAudio(f Font, a audio.Audio) *FontAudio {
 	return &FontAudio{f, a}
 }
 
