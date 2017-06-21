@@ -1,9 +1,11 @@
 package klangsynthese
 
+import "github.com/200sc/klangsynthese/audio"
+
 // Font represents some group of settings which modify how an Audio
 // should be played. The name is derived from the concept of a SoundFont
 type Font struct {
-	Filters []Filter
+	Filters []audio.Filter
 }
 
 // NewFont returns a *Font.
@@ -14,11 +16,11 @@ func NewFont() *Font {
 
 // Filter on a font is applied to all audios as they are played.
 // Each call of Filter will completely reset a Font's filters
-func (f *Font) Filter(fs ...Filter) {
+func (f *Font) Filter(fs ...audio.Filter) {
 	f.Filters = fs
 }
 
 // Play on a font is equivalent to Audio.Copy().Filter(Font.GetFilters()).Play()
-func (f *Font) Play(a Audio) <-chan bool {
+func (f *Font) Play(a audio.Audio) <-chan error {
 	return a.Copy().Filter(f.Filters...).Play()
 }

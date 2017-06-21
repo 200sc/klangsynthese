@@ -1,4 +1,4 @@
-package klangsynthese
+package audio
 
 // A Filter takes an input audio and returns some new Audio from them.
 // This usage implies that Audios can be copied, and that Audios have

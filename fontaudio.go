@@ -25,6 +25,6 @@ func NewFontAudio(f Font, a Audio) *FontAudio {
 }
 
 // Play is equivalent to FontAudio.Font.Play(fa.Audio)
-func (fa *FontAudio) Play() <-chan bool {
+func (fa *FontAudio) Play() <-chan error {
 	return fa.Font.Play(fa.Audio)
 }

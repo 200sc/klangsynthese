@@ -6,6 +6,6 @@ import "io"
 // synthesis options
 type Controller interface {
 	Wave(Synth) (Audio, error)
-	Load(io.Reader) (Audio, error)
-	Save(io.Writer, Audio) error
+	Load(io.ReadCloser) (Audio, error)
+	Save(io.WriteCloser, Audio) error
 }
