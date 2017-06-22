@@ -32,13 +32,13 @@ func init() {
 	}
 
 	ds, err = dsound.DirectSoundCreate(nil)
-
-	desktopWindow, _, err2 := getDesktopWindow.Call()
 	if err != nil {
-		ds = nil
-		err = err2
 		return
 	}
+	// We don't check this error because Call() can return
+	// "The operation was completed successfully" as an error!
+	// Todo: type switch? Do we know the type of "success errors"?
+	desktopWindow, _, _ := getDesktopWindow.Call()
 	err = ds.SetCooperativeLevel(syscall.Handle(desktopWindow), dsound.DSSCL_PRIORITY)
 	if err != nil {
 		ds = nil
