@@ -1,6 +1,7 @@
 package mp3
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 
@@ -27,14 +28,11 @@ func (mc *Controller) Load(r io.ReadCloser) (audio.Audio, error) {
 	if err != nil {
 		return nil, err
 	}
-	b := make([]byte, d.Length())
-	fmt.Println(len(b))
-	for err != io.EOF {
-		_, err = d.Read(b)
-		if err != nil && err != io.EOF {
-			return nil, err
-		}
-	}
+	buf := bytes.NewBuffer(make([]byte, 0, d.Length()))
+	read, err := io.Copy(buf, d)
+	b := buf.Bytes()
+	fmt.Println(buf.Len())
+	fmt.Println(read, err)
 	format := mc.Format()
 	format.SampleRate = uint32(d.SampleRate())
 	fmt.Println(d)

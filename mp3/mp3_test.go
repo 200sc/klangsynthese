@@ -19,5 +19,5 @@ func TestBasicMp3(t *testing.T) {
 	err = <-a.Play()
 	assert.Nil(t, err)
 	fmt.Println("Starting playing")
-	time.Sleep(20 * time.Second)
+	time.Sleep(10 * time.Second)
 }
