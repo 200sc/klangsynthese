@@ -21,6 +21,14 @@ func NewController() *Controller {
 	return &Controller{}
 }
 
+func (mc *Controller) Wave(b []byte) (audio.Audio, error) {
+	return audio.EncodeBytes(
+		audio.Encoding{
+			Data:   b,
+			Format: mc.Format(),
+		})
+}
+
 func (mc *Controller) Load(r io.ReadCloser) (audio.Audio, error) {
 	wav, err := ReadWavData(r)
 	if err != nil {
