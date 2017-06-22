@@ -1,6 +1,9 @@
 package synth
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 const (
 	SampleRate = 44100
@@ -13,5 +16,18 @@ func Sin(freq uint16, seconds float64, volume uint8) []byte {
 	for i := range wave {
 		wave[i] = byte(float64(volume) * math.Sin(freqf*(float64(i)/float64(SampleRate))*2*math.Pi))
 	}
+	return wave
+}
+
+func Square(freq uint16, seconds float64, volume uint8) []byte {
+	wave := Sin(freq, seconds, volume)
+	for i, v := range wave {
+		if v < 128 {
+			wave[i] = volume - 1
+		} else {
+			wave[i] = 255 - (volume) + 2
+		}
+	}
+	fmt.Println(wave)
 	return wave
 }
