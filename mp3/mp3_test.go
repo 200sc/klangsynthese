@@ -19,5 +19,6 @@ func TestBasicMp3(t *testing.T) {
 	err = <-a.Play()
 	assert.Nil(t, err)
 	fmt.Println("Starting playing")
-	time.Sleep(10 * time.Second)
+	time.Sleep(2 * time.Second)
+	// In addition to the error tests here, this should play noise
 }

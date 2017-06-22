@@ -19,4 +19,5 @@ func TestBasicWav(t *testing.T) {
 	err = <-a.Play()
 	assert.Nil(t, err)
 	time.Sleep(4 * time.Second)
+	// In addition to the error tests here, this should play noise
 }

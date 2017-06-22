@@ -2,7 +2,6 @@ package mp3
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 
 	"github.com/200sc/klangsynthese/audio"
@@ -29,17 +28,15 @@ func (mc *Controller) Load(r io.ReadCloser) (audio.Audio, error) {
 		return nil, err
 	}
 	buf := bytes.NewBuffer(make([]byte, 0, d.Length()))
-	read, err := io.Copy(buf, d)
-	b := buf.Bytes()
-	fmt.Println(buf.Len())
-	fmt.Println(read, err)
+	_, err = io.Copy(buf, d)
+	if err != nil {
+		return nil, err
+	}
 	format := mc.Format()
 	format.SampleRate = uint32(d.SampleRate())
-	fmt.Println(d)
-	fmt.Println("Mp3 format:", format)
 	return audio.EncodeBytes(
 		audio.Encoding{
-			Data:   b,
+			Data:   buf.Bytes(),
 			Format: format,
 		})
 }
