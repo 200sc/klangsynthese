@@ -9,7 +9,7 @@ import (
 )
 
 func TestSinWav(t *testing.T) {
-	a, err := wav.NewController().Wave(Sin(A4, 2, 64))
+	a, err := wav.NewController().Wave(Sin(A4, 2, 32))
 	assert.Nil(t, err)
 	err = <-a.Play()
 	assert.Nil(t, err)
@@ -17,7 +17,7 @@ func TestSinWav(t *testing.T) {
 }
 
 func TestSquareWav(t *testing.T) {
-	a, err := wav.NewController().Wave(Square(C4, 2, 128))
+	a, err := wav.NewController().Wave(Square(A4, 2, 32))
 	assert.Nil(t, err)
 	err = <-a.Play()
 	assert.Nil(t, err)
@@ -27,6 +27,14 @@ func TestSquareWav(t *testing.T) {
 // Not yet!
 func TestSawWav(t *testing.T) {
 	a, err := wav.NewController().Wave(Saw(A4, 2, 32))
+	assert.Nil(t, err)
+	err = <-a.Play()
+	assert.Nil(t, err)
+	time.Sleep(2 * time.Second)
+}
+
+func TestReverseSawWav(t *testing.T) {
+	a, err := wav.NewController().Wave(Reverse(Saw(A4, 2, 32)))
 	assert.Nil(t, err)
 	err = <-a.Play()
 	assert.Nil(t, err)

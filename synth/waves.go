@@ -1,49 +1,52 @@
 package synth
 
-import (
-	"fmt"
-	"math"
-)
+import "math"
 
 const (
 	SampleRate = 44100
 )
 
-// Todo: functions to make frequency and volume meaningful!
+// Thanks to https://en.wikibooks.org/wiki/Sound_Synthesis_Theory/Oscillators_and_Wavetables
+func phase(freq Pitch, i, sampleRate int) float64 {
+	return float64(freq/4) * (float64(i) / float64(SampleRate)) * 2 * math.Pi
+}
+
 func Sin(freq Pitch, seconds float64, volume uint8) []byte {
-	freqf := float64(freq / 4)
 	wave := make([]byte, int(seconds*float64(SampleRate)))
 	for i := range wave {
-		wave[i] = byte(float64(volume) * math.Sin(freqf*(float64(i)/float64(SampleRate))*2*math.Pi))
+		wave[i] = byte(float64(volume) * math.Sin(phase(freq, i, SampleRate)))
 	}
 	return wave
 }
 
 func Square(freq Pitch, seconds float64, volume uint8) []byte {
-	wave := Sin(freq, seconds, volume)
-	for i, v := range wave {
-		if v < 128 {
-			wave[i] = volume - 1
+	wave := make([]byte, int(seconds*float64(SampleRate)))
+	for i := range wave {
+		// alternatively phase % 2pi
+		if math.Sin(phase(freq, i, SampleRate)) > 0 {
+			wave[i] = volume
 		} else {
-			wave[i] = 255 - volume + 2
+			wave[i] = -volume
 		}
 	}
 	return wave
 }
 
 func Saw(freq Pitch, seconds float64, volume uint8) []byte {
-	freqf := float64(freq / 4)
 	wave := make([]byte, int(seconds*float64(SampleRate)))
-	vRange := 2*int(volume) - 2
 	for i := range wave {
-		// Goes from 257 - volume to volume - 1
-		// then wraps around
-		// range from 0 to (2*volume) - 2
-		v := int(freqf*(float64(i)/float64(SampleRate)*2*math.Pi)) % vRange
-		wave[i] = volume * (byte(v) - volume)
-		//fmt.Println(freqf * (float64(i) / float64(SampleRate)))
+		wave[i] = byte(float64(volume) - (float64(volume) / math.Pi * math.Mod(phase(freq, i, SampleRate), 2*math.Pi)))
 	}
-	fmt.Println(wave)
-	fmt.Println(vRange)
 	return wave
 }
+
+// Reverse is included here so Reverse(Saw(...)) and the like can be written
+func Reverse(wave []byte) []byte {
+	for i := 0; i < len(wave)/2; i++ {
+		j := len(wave) - i - 1
+		wave[i], wave[j] = wave[j], wave[i]
+	}
+	return wave
+}
+
+type Wave func(freq Pitch, i, sampleRate int)

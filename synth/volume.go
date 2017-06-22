@@ -1,6 +1,6 @@
 package synth
 
 const (
-	MinVolume uint8 = 0
-	MaxVolume uint8 = 128
+	MinVolume uint8 = 1
+	MaxVolume uint8 = 127
 )
