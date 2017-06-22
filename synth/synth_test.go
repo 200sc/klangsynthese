@@ -9,32 +9,27 @@ import (
 )
 
 func TestSinWav(t *testing.T) {
-	a, err := wav.NewController().Wave(Sin(A4, 2, 32))
-	assert.Nil(t, err)
-	err = <-a.Play()
-	assert.Nil(t, err)
-	time.Sleep(2 * time.Second)
+	testWave(t, Sin(A4, 2, 32))
 }
 
 func TestSquareWav(t *testing.T) {
-	a, err := wav.NewController().Wave(Square(A4, 2, 32))
-	assert.Nil(t, err)
-	err = <-a.Play()
-	assert.Nil(t, err)
-	time.Sleep(2 * time.Second)
+	testWave(t, Square(A4, 2, 32))
 }
 
-// Not yet!
 func TestSawWav(t *testing.T) {
-	a, err := wav.NewController().Wave(Saw(A4, 2, 32))
-	assert.Nil(t, err)
-	err = <-a.Play()
-	assert.Nil(t, err)
-	time.Sleep(2 * time.Second)
+	testWave(t, Saw(A4, 2, 32))
 }
 
 func TestReverseSawWav(t *testing.T) {
-	a, err := wav.NewController().Wave(Reverse(Saw(A4, 2, 32)))
+	testWave(t, Reverse(Saw(A4, 2, 32)))
+}
+
+func TestTriangle(t *testing.T) {
+	testWave(t, Triangle(A4, 2, 32))
+}
+
+func testWave(t *testing.T, wave []byte) {
+	a, err := wav.NewController().Wave(wave)
 	assert.Nil(t, err)
 	err = <-a.Play()
 	assert.Nil(t, err)

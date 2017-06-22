@@ -40,6 +40,20 @@ func Saw(freq Pitch, seconds float64, volume uint8) []byte {
 	return wave
 }
 
+func Triangle(freq Pitch, seconds float64, volume uint8) []byte {
+	wave := make([]byte, int(seconds*float64(SampleRate)))
+	for i := range wave {
+		p := math.Mod(phase(freq, i, SampleRate), 2*math.Pi)
+		m := byte(p * (2 * float64(volume) / math.Pi))
+		if math.Sin(p) > 0 {
+			wave[i] = -volume + m
+		} else {
+			wave[i] = 3*volume - m
+		}
+	}
+	return wave
+}
+
 // Reverse is included here so Reverse(Saw(...)) and the like can be written
 func Reverse(wave []byte) []byte {
 	for i := 0; i < len(wave)/2; i++ {
