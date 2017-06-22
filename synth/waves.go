@@ -10,7 +10,7 @@ const (
 )
 
 // Todo: functions to make frequency and volume meaningful!
-func Sin(freq uint16, seconds float64, volume uint8) []byte {
+func Sin(freq Pitch, seconds float64, volume uint8) []byte {
 	freqf := float64(freq / 4)
 	wave := make([]byte, int(seconds*float64(SampleRate)))
 	for i := range wave {
@@ -19,7 +19,7 @@ func Sin(freq uint16, seconds float64, volume uint8) []byte {
 	return wave
 }
 
-func Square(freq uint16, seconds float64, volume uint8) []byte {
+func Square(freq Pitch, seconds float64, volume uint8) []byte {
 	wave := Sin(freq, seconds, volume)
 	for i, v := range wave {
 		if v < 128 {
@@ -28,11 +28,10 @@ func Square(freq uint16, seconds float64, volume uint8) []byte {
 			wave[i] = 255 - volume + 2
 		}
 	}
-	fmt.Println(wave)
 	return wave
 }
 
-func Saw(freq uint16, seconds float64, volume uint8) []byte {
+func Saw(freq Pitch, seconds float64, volume uint8) []byte {
 	freqf := float64(freq / 4)
 	wave := make([]byte, int(seconds*float64(SampleRate)))
 	vRange := 2*int(volume) - 2
