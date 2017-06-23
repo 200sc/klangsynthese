@@ -22,5 +22,13 @@ func (f *Font) Filter(fs ...audio.Filter) {
 
 // Play on a font is equivalent to Audio.Copy().Filter(Font.GetFilters()).Play()
 func (f *Font) Play(a audio.Audio) <-chan error {
-	return a.Copy().Filter(f.Filters...).Play()
+	a2, err := a.Copy()
+	if err != nil {
+		ch := make(chan error)
+		go func() {
+			ch <- err
+		}()
+		return ch
+	}
+	return a2.Filter(f.Filters...).Play()
 }
