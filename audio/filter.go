@@ -11,6 +11,7 @@ package audio
 // Specific audio implementations could not follow this, however.
 type Filter func(Audio) Audio
 
+// Loop will cause an audio to loop when played
 func Loop(a Audio) Audio {
 	enc := a.GetEncoding()
 	enc.loop = true
@@ -18,6 +19,8 @@ func Loop(a Audio) Audio {
 }
 
 // NoLoop is only meaningful on audio that has already had Loop filtered on it
+// Audio filtered with NoLoop will not loop.
+// Consider alternative: Loop(boolean)
 func NoLoop(a Audio) Audio {
 	enc := a.GetEncoding()
 	enc.loop = false

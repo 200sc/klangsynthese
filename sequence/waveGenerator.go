@@ -11,5 +11,5 @@ type WaveGenerator struct {
 }
 
 func (wg *WaveGenerator) Generate() *Sequence {
-	//...
+	
 }
