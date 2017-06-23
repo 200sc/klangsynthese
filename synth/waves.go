@@ -19,6 +19,23 @@ func Sin(freq Pitch, seconds float64, volume uint8) []byte {
 	return wave
 }
 
+// Pulse acts like Square when given a pulse of 2, when given any lesser
+// pulse the time up and down will change so that 1/pulse time the wave will
+// be up.
+func Pulse(freq Pitch, seconds float64, volume uint8, pulse float64) []byte {
+	wave := make([]byte, int(seconds*float64(SampleRate)))
+	pulseSwitch := 1 - 2/pulse
+	for i := range wave {
+		// alternatively phase % 2pi
+		if math.Sin(phase(freq, i, SampleRate)) > pulseSwitch {
+			wave[i] = volume
+		} else {
+			wave[i] = -volume
+		}
+	}
+	return wave
+}
+
 func Square(freq Pitch, seconds float64, volume uint8) []byte {
 	wave := make([]byte, int(seconds*float64(SampleRate)))
 	for i := range wave {
@@ -54,6 +71,8 @@ func Triangle(freq Pitch, seconds float64, volume uint8) []byte {
 	return wave
 }
 
+// Could have pulse triangle
+
 // Reverse is included here so Reverse(Saw(...)) and the like can be written
 func Reverse(wave []byte) []byte {
 	for i := 0; i < len(wave)/2; i++ {
@@ -63,4 +82,17 @@ func Reverse(wave []byte) []byte {
 	return wave
 }
 
-type Wave func(freq Pitch, i, sampleRate int)
+// Add is a utility to add together all indices in the given waves.
+// You need to send waves of the same length to Add, right now Add does
+// not check that you are doing that. (strictly speaking, the first wave
+// just needs to be as long as the longest following wave, all remaining
+// waves can be of a shorter length than the first)
+func Add(waves ...[]byte) []byte {
+	wave := waves[0]
+	for j := 1; j < len(waves); j++ {
+		for i, v := range waves[j] {
+			wave[i] += v
+		}
+	}
+	return wave
+}

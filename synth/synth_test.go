@@ -20,12 +20,24 @@ func TestSawWav(t *testing.T) {
 	testWave(t, Saw(A4, 2, 32))
 }
 
-func TestReverseSawWav(t *testing.T) {
-	testWave(t, Reverse(Saw(A4, 2, 32)))
+func TestTriangleWav(t *testing.T) {
+	testWave(t, Triangle(A4, 2, 32))
 }
 
-func TestTriangle(t *testing.T) {
-	testWave(t, Triangle(A4, 2, 32))
+func TestPulse(t *testing.T) {
+	testWave(t, Pulse(A4, 2, 32, 8))
+}
+
+func TestAdd(t *testing.T) {
+	testWave(t,
+		//	i.e harmonics
+		Add(Sin(A4, 2, 16),
+			Sin(A4*2, 2, 16),
+			Sin(A4*3, 2, 16),
+			Sin(A4*4, 2, 16),
+			Sin(A4*5, 2, 16),
+			Sin(A4*6, 2, 16),
+		))
 }
 
 func testWave(t *testing.T, wave []byte) {
