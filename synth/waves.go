@@ -11,6 +11,8 @@ func phase(freq Pitch, i, sampleRate int) float64 {
 	return float64(freq/4) * (float64(i) / float64(SampleRate)) * 2 * math.Pi
 }
 
+type Wave func(Pitch, float64, uint8) []byte
+
 func Sin(freq Pitch, seconds float64, volume uint8) []byte {
 	wave := make([]byte, int(seconds*float64(SampleRate)))
 	for i := range wave {
@@ -22,18 +24,20 @@ func Sin(freq Pitch, seconds float64, volume uint8) []byte {
 // Pulse acts like Square when given a pulse of 2, when given any lesser
 // pulse the time up and down will change so that 1/pulse time the wave will
 // be up.
-func Pulse(freq Pitch, seconds float64, volume uint8, pulse float64) []byte {
-	wave := make([]byte, int(seconds*float64(SampleRate)))
+func Pulse(pulse float64) Wave {
 	pulseSwitch := 1 - 2/pulse
-	for i := range wave {
-		// alternatively phase % 2pi
-		if math.Sin(phase(freq, i, SampleRate)) > pulseSwitch {
-			wave[i] = volume
-		} else {
-			wave[i] = -volume
+	return func(freq Pitch, seconds float64, volume uint8) []byte {
+		wave := make([]byte, int(seconds*float64(SampleRate)))
+		for i := range wave {
+			// alternatively phase % 2pi
+			if math.Sin(phase(freq, i, SampleRate)) > pulseSwitch {
+				wave[i] = volume
+			} else {
+				wave[i] = -volume
+			}
 		}
+		return wave
 	}
-	return wave
 }
 
 func Square(freq Pitch, seconds float64, volume uint8) []byte {

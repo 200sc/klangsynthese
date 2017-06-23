@@ -25,7 +25,7 @@ func TestTriangleWav(t *testing.T) {
 }
 
 func TestPulse(t *testing.T) {
-	testWave(t, Pulse(A4, 2, 32, 8))
+	testWave(t, Pulse(8)(A4, 2, 32))
 }
 
 func TestAdd(t *testing.T) {
