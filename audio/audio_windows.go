@@ -89,19 +89,22 @@ func EncodeBytes(enc Encoding) (Audio, error) {
 		return nil, err
 	}
 	return &dsAudio{
-		Encoding:           enc,
+		Encoding:           &enc,
 		IDirectSoundBuffer: dsbuff,
 	}, nil
 }
 
 type dsAudio struct {
-	Encoding
+	*Encoding
 	*dsound.IDirectSoundBuffer
 	flags dsound.BufferPlayFlag
 }
 
 func (ds *dsAudio) Play() <-chan error {
 	ch := make(chan error)
+	if ds.loop {
+		ds.flags = dsound.DSBPLAY_LOOPING
+	}
 	go func(dsbuff *dsound.IDirectSoundBuffer, flags dsound.BufferPlayFlag, ch chan error) {
 		err := dsbuff.SetCurrentPosition(0)
 		if err != nil {

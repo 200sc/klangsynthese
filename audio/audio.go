@@ -10,6 +10,9 @@ type Audio interface {
 	Filter(...Filter) Audio
 	// Stop will stop an ongoing audio
 	Stop() error
-	Copy() Audio
-	GetEncoding() Encoding
+
+	// Implementing struct-- encoding
+	Copy() (Audio, error)
+	MustCopy() Audio
+	GetEncoding() *Encoding
 }
