@@ -6,6 +6,10 @@ import (
 	"github.com/200sc/klangsynthese/audio"
 )
 
+type SequenceI interface {
+	audio.Audio
+}
+
 // This is notes / pseudo-code / not useable yet
 
 // A Sequence does not care if it loops because that is audio/Encoding's job

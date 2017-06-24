@@ -102,7 +102,7 @@ type dsAudio struct {
 
 func (ds *dsAudio) Play() <-chan error {
 	ch := make(chan error)
-	if ds.loop {
+	if ds.Loop {
 		ds.flags = dsound.DSBPLAY_LOOPING
 	}
 	go func(dsbuff *dsound.IDirectSoundBuffer, flags dsound.BufferPlayFlag, ch chan error) {
@@ -132,7 +132,7 @@ func (ds *dsAudio) Stop() error {
 func (ds *dsAudio) Filter(fs ...Filter) Audio {
 	var a Audio = ds
 	for _, f := range fs {
-		a = f(a)
+		a = f.Apply(a)
 	}
 	return a
 }

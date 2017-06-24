@@ -6,7 +6,7 @@ type Encoding struct {
 	// Consider: non []byte data?
 	Data []byte
 	Format
-	loop bool
+	CanLoop
 }
 
 // Encoding returns itself
