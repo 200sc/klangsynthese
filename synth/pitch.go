@@ -1,8 +1,11 @@
 package synth
 
+// A Pitch is a helper type for synth functions so
+// a user can write A4 instead of a frequency value
+// for a desired tone
 type Pitch uint16
 
-// Pitche frequencies
+// Pitch frequencies
 // Values taken from http://peabody.sapp.org/class/st2/lab/notehz/
 const (
 	C0  Pitch = 16
@@ -385,14 +388,18 @@ var (
 	}
 )
 
+// A Step is an index offset on a pitch
+// to raise or lower it to a relative new pitch
 type Step int
 
+// Step values
 const (
 	HalfStep  Step = 1
 	WholeStep      = 2
 	Octave         = 12
 )
 
+// Up raises a pitch s steps
 func (p Pitch) Up(s Step) Pitch {
 	i := noteIndices[p]
 	if i+int(s) >= len(allPitches) {
@@ -401,6 +408,7 @@ func (p Pitch) Up(s Step) Pitch {
 	return allPitches[i+int(s)]
 }
 
+// Down lowers a pitch s steps
 func (p Pitch) Down(s Step) Pitch {
 	i := noteIndices[p]
 	if i-int(s) < 0 {

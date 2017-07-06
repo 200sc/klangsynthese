@@ -65,7 +65,7 @@ func (s *Sequence) Play() <-chan error {
 	return ch
 }
 
-func (s *Sequence) Filter(fs ...audio.Filter) audio.Audio {
+func (s *Sequence) Filter(fs ...audio.Filter) (audio.Audio, error) {
 	// Filter on a sequence just applies the filter to all audios..
 	// but it can't do that always, what if the filter is Loop?
 	// this implies two kinds of filters?
@@ -83,7 +83,12 @@ func (s *Sequence) Filter(fs ...audio.Filter) audio.Audio {
 	// 		}
 	// 	}
 	// }
-	return s
+	return s, nil
+}
+
+func (s *Sequence) MustFilter(fs ...audio.Filter) audio.Audio {
+	a, _ := s.Filter(fs...)
+	return a
 }
 
 func (s *Sequence) Stop() error {
@@ -126,13 +131,4 @@ func (s *Sequence) MustCopy() audio.Audio {
 		panic(err)
 	}
 	return a
-}
-
-func (s *Sequence) GetEncoding() *audio.Encoding {
-	// With the interface the way it is now, this would require
-	// combining all encodings in a sequence and if there were
-	// conflicts in formatting we would have to just pick one
-	// this is a lot of work, and causes issues, so we aren't
-	// comitting to that right yet
-	return nil
 }

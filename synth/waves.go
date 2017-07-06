@@ -2,6 +2,7 @@ package synth
 
 import "math"
 
+// Default SampleRate
 const (
 	SampleRate = 44100
 )
@@ -11,9 +12,15 @@ func phase(freq Pitch, i, sampleRate int) float64 {
 	return float64(freq/4) * (float64(i) / float64(SampleRate)) * 2 * math.Pi
 }
 
-type Wave func(Pitch, float64, uint8) []byte
+// A Wave function takes in a volume, pitch, and time and produces a sound wave
+type Wave func(Pitch, float64, Volume) []byte
 
-func Sin(freq Pitch, seconds float64, volume uint8) []byte {
+// Sin produces a Sin wave
+//         __
+//       --  --
+//      /      \
+//--__--        --__--
+func Sin(freq Pitch, seconds float64, volume Volume) []byte {
 	wave := make([]byte, int(seconds*float64(SampleRate)))
 	for i := range wave {
 		wave[i] = byte(float64(volume) * math.Sin(phase(freq, i, SampleRate)))
@@ -24,36 +31,50 @@ func Sin(freq Pitch, seconds float64, volume uint8) []byte {
 // Pulse acts like Square when given a pulse of 2, when given any lesser
 // pulse the time up and down will change so that 1/pulse time the wave will
 // be up.
+//
+//     __    __
+//     ||    ||
+// ____||____||____
 func Pulse(pulse float64) Wave {
 	pulseSwitch := 1 - 2/pulse
-	return func(freq Pitch, seconds float64, volume uint8) []byte {
+	return func(freq Pitch, seconds float64, volume Volume) []byte {
 		wave := make([]byte, int(seconds*float64(SampleRate)))
 		for i := range wave {
 			// alternatively phase % 2pi
 			if math.Sin(phase(freq, i, SampleRate)) > pulseSwitch {
-				wave[i] = volume
+				wave[i] = byte(volume)
 			} else {
-				wave[i] = -volume
+				wave[i] = byte(-volume)
 			}
 		}
 		return wave
 	}
 }
 
-func Square(freq Pitch, seconds float64, volume uint8) []byte {
+// Square produces a Square wave
+//
+//       _________
+//       |       |
+// ______|       |________
+func Square(freq Pitch, seconds float64, volume Volume) []byte {
 	wave := make([]byte, int(seconds*float64(SampleRate)))
 	for i := range wave {
 		// alternatively phase % 2pi
 		if math.Sin(phase(freq, i, SampleRate)) > 0 {
-			wave[i] = volume
+			wave[i] = byte(volume)
 		} else {
-			wave[i] = -volume
+			wave[i] = byte(-volume)
 		}
 	}
 	return wave
 }
 
-func Saw(freq Pitch, seconds float64, volume uint8) []byte {
+// Saw produces a saw wave
+//
+//   ^   ^   ^
+//  / | / | /
+// /  |/  |/
+func Saw(freq Pitch, seconds float64, volume Volume) []byte {
 	wave := make([]byte, int(seconds*float64(SampleRate)))
 	for i := range wave {
 		wave[i] = byte(float64(volume) - (float64(volume) / math.Pi * math.Mod(phase(freq, i, SampleRate), 2*math.Pi)))
@@ -61,15 +82,20 @@ func Saw(freq Pitch, seconds float64, volume uint8) []byte {
 	return wave
 }
 
-func Triangle(freq Pitch, seconds float64, volume uint8) []byte {
+// Triangle produces a Triangle wave
+//
+//   ^   ^
+//  / \ / \
+// v   v   v
+func Triangle(freq Pitch, seconds float64, volume Volume) []byte {
 	wave := make([]byte, int(seconds*float64(SampleRate)))
 	for i := range wave {
 		p := math.Mod(phase(freq, i, SampleRate), 2*math.Pi)
 		m := byte(p * (2 * float64(volume) / math.Pi))
 		if math.Sin(p) > 0 {
-			wave[i] = -volume + m
+			wave[i] = byte(-volume) + m
 		} else {
-			wave[i] = 3*volume - m
+			wave[i] = 3*byte(volume) - m
 		}
 	}
 	return wave
