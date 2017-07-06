@@ -11,13 +11,13 @@ import (
 func TestWaveGenerator(t *testing.T) {
 	wg := WaveGenerator{
 		Fn:   synth.Sin,
-		Tick: time.Millisecond * 500,
+		Tick: time.Millisecond * 200,
 		PitchPattern: []synth.Pitch{
 			synth.A4,
 			synth.A5,
 			synth.A6,
 			synth.G6,
-			synth.G5,
+			synth.Rest,
 			synth.G4,
 		},
 		VolumePattern: []synth.Volume{
@@ -25,7 +25,7 @@ func TestWaveGenerator(t *testing.T) {
 			64,
 			96,
 		},
-		Loop: false,
+		Loop: true,
 	}
 	sq := wg.Generate()
 	sq.Play()

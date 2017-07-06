@@ -2,9 +2,10 @@ package synth
 
 import "math"
 
-// Default SampleRate
+// Default wave generation variables
 const (
 	SampleRate = 44100
+	Channels   = 2
 )
 
 // Thanks to https://en.wikibooks.org/wiki/Sound_Synthesis_Theory/Oscillators_and_Wavetables
@@ -21,7 +22,7 @@ type Wave func(Pitch, float64, Volume) []byte
 //      /      \
 //--__--        --__--
 func Sin(freq Pitch, seconds float64, volume Volume) []byte {
-	wave := make([]byte, int(seconds*float64(SampleRate)))
+	wave := make([]byte, int(seconds*float64(SampleRate)*Channels))
 	for i := range wave {
 		wave[i] = byte(float64(volume) * math.Sin(phase(freq, i, SampleRate)))
 	}
@@ -38,7 +39,7 @@ func Sin(freq Pitch, seconds float64, volume Volume) []byte {
 func Pulse(pulse float64) Wave {
 	pulseSwitch := 1 - 2/pulse
 	return func(freq Pitch, seconds float64, volume Volume) []byte {
-		wave := make([]byte, int(seconds*float64(SampleRate)))
+		wave := make([]byte, int(seconds*float64(SampleRate)*Channels))
 		for i := range wave {
 			// alternatively phase % 2pi
 			if math.Sin(phase(freq, i, SampleRate)) > pulseSwitch {
@@ -57,7 +58,7 @@ func Pulse(pulse float64) Wave {
 //       |       |
 // ______|       |________
 func Square(freq Pitch, seconds float64, volume Volume) []byte {
-	wave := make([]byte, int(seconds*float64(SampleRate)))
+	wave := make([]byte, int(seconds*float64(SampleRate)*Channels))
 	for i := range wave {
 		// alternatively phase % 2pi
 		if math.Sin(phase(freq, i, SampleRate)) > 0 {
@@ -75,7 +76,7 @@ func Square(freq Pitch, seconds float64, volume Volume) []byte {
 //  / | / | /
 // /  |/  |/
 func Saw(freq Pitch, seconds float64, volume Volume) []byte {
-	wave := make([]byte, int(seconds*float64(SampleRate)))
+	wave := make([]byte, int(seconds*float64(SampleRate)*Channels))
 	for i := range wave {
 		wave[i] = byte(float64(volume) - (float64(volume) / math.Pi * math.Mod(phase(freq, i, SampleRate), 2*math.Pi)))
 	}
@@ -88,7 +89,7 @@ func Saw(freq Pitch, seconds float64, volume Volume) []byte {
 //  / \ / \
 // v   v   v
 func Triangle(freq Pitch, seconds float64, volume Volume) []byte {
-	wave := make([]byte, int(seconds*float64(SampleRate)))
+	wave := make([]byte, int(seconds*float64(SampleRate)*2))
 	for i := range wave {
 		p := math.Mod(phase(freq, i, SampleRate), 2*math.Pi)
 		m := byte(p * (2 * float64(volume) / math.Pi))

@@ -1,7 +1,6 @@
 package sequence
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/200sc/klangsynthese/audio"
@@ -34,17 +33,18 @@ func (wg *WaveGenerator) Generate() *Sequence {
 	pitchIndex := 0
 	volumeIndex := 0
 	tickSeconds := wg.Tick.Seconds()
-	fmt.Println(tickSeconds, "Seconds")
 	for i := range sq.Pattern {
-		a, _ := controller.Wave(wg.Fn(
-			wg.PitchPattern[pitchIndex],
-			tickSeconds,
-			wg.VolumePattern[volumeIndex],
-		))
-		sq.Pattern[i] = audio.Multi{[]audio.Audio{a}}
-		// if err != nil {
-		// return err
-		// }
+		p := wg.PitchPattern[pitchIndex]
+		if p != synth.Rest {
+			a, _ := controller.Wave(wg.Fn(
+				p,
+				tickSeconds,
+				wg.VolumePattern[volumeIndex],
+			))
+			sq.Pattern[i] = audio.Multi{[]audio.Audio{a}}
+		} else {
+			sq.Pattern[i] = audio.Multi{[]audio.Audio{}}
+		}
 		pitchIndex = (pitchIndex + 1) % len(wg.PitchPattern)
 		volumeIndex = (volumeIndex + 1) % len(wg.VolumePattern)
 	}

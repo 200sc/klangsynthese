@@ -1,7 +1,6 @@
 package sequence
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/200sc/klangsynthese/audio"
@@ -47,7 +46,6 @@ func (s *Sequence) Play() <-chan error {
 					s.stopCh <- s.Pattern[s.patternIndex].Stop()
 					return
 				case <-s.Ticker.C:
-					fmt.Println(time.Now())
 				}
 				s.patternIndex++
 			}
