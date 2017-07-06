@@ -1,6 +1,7 @@
 package sequence
 
 import (
+	"errors"
 	"time"
 
 	"github.com/200sc/klangsynthese/audio"
@@ -123,4 +124,22 @@ func (s *Sequence) MustCopy() audio.Audio {
 		panic(err)
 	}
 	return a
+}
+
+func (s *Sequence) Combine(s2 *Sequence) (*Sequence, error) {
+	// Todo: we should be able to combine not-too-disparate
+	// sequences like one that ticks on .5 seconds and one that ticks
+	// on .25 seconds
+	if s.tickDuration != s2.tickDuration {
+		return nil, errors.New("Incompatible sequences")
+	}
+	seq, err := s.Copy()
+	if err != nil {
+		return nil, err
+	}
+	s3 := seq.(*Sequence)
+	for i, col := range s2.Pattern {
+		s3.Pattern[i].Audios = append(s3.Pattern[i].Audios, col.Audios...)
+	}
+	return s3, nil
 }
