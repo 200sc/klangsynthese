@@ -1,6 +1,7 @@
 package sequence
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/200sc/klangsynthese/audio"
@@ -22,7 +23,7 @@ type Sequence struct {
 	// Sequences play patterns of audio
 	// everything at Pattern[0] will be simultaneously Play()ed at
 	// Sequence.Play()
-	Pattern      [][]audio.Audio
+	Pattern      []audio.Multi
 	patternIndex int
 	// Every tick, the next index in Pattern will be played by a Sequence
 	// until the pattern is over.
@@ -40,20 +41,13 @@ func (s *Sequence) Play() <-chan error {
 		for {
 			s.patternIndex = 0
 			for s.patternIndex < len(s.Pattern) {
-				for _, a := range s.Pattern[s.patternIndex] {
-					a.Play()
-				}
+				s.Pattern[s.patternIndex].Play()
 				select {
 				case <-s.stopCh:
-					for _, a := range s.Pattern[s.patternIndex] {
-						err := a.Stop()
-						if err != nil {
-							s.stopCh <- err
-							return
-						}
-					}
+					s.stopCh <- s.Pattern[s.patternIndex].Stop()
 					return
 				case <-s.Ticker.C:
+					fmt.Println(time.Now())
 				}
 				s.patternIndex++
 			}
@@ -99,15 +93,15 @@ func (s *Sequence) Stop() error {
 func (s *Sequence) Copy() (audio.Audio, error) {
 	var err error
 	s2 := &Sequence{
-		Pattern:      make([][]audio.Audio, len(s.Pattern)),
+		Pattern:      make([]audio.Multi, len(s.Pattern)),
 		Ticker:       time.NewTicker(s.tickDuration),
 		tickDuration: s.tickDuration,
 		stopCh:       make(chan error),
 		loop:         s.loop,
 	}
 	for i := range s2.Pattern {
-		s2.Pattern[i] = make([]audio.Audio, len(s.Pattern[i]))
-		for j := range s2.Pattern[i] {
+		s2.Pattern[i].Audios = make([]audio.Audio, len(s.Pattern[i].Audios))
+		for j := range s2.Pattern[i].Audios {
 			// This could make a sequence that reuses the same
 			// audio use a lot more memory when copied-- a better route
 			// would involve identifying all unique audios
@@ -116,7 +110,7 @@ func (s *Sequence) Copy() (audio.Audio, error) {
 			// (which would probably be a hash of their encoding?
 			// but that raises issues for audios that don't want
 			// to follow real encoding rules (like this one!))
-			s2.Pattern[i][j], err = s.Pattern[i][j].Copy()
+			s2.Pattern[i].Audios[j], err = s.Pattern[i].Audios[j].Copy()
 			if err != nil {
 				return nil, err
 			}
