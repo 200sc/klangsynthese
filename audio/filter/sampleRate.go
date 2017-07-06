@@ -1,15 +1,19 @@
 package filter
 
-import "github.com/200sc/klangsynthese/audio"
+import (
+	"github.com/200sc/klangsynthese/audio"
+	"github.com/200sc/klangsynthese/audio/filter/supports"
+)
 
+// A SampleRate is a function that takes in uint32 SampleRates
 type SampleRate func(*uint32)
-type SupportsSampleRate interface {
-	GetSampleRate() *uint32
-}
 
-func (srf SampleRate) Apply(a audio.Audio) audio.Audio {
-	if ssr, ok := a.(SupportsSampleRate); ok {
+// Apply checks that the given audio supports SampleRate, filters if it
+// can, then returns
+func (srf SampleRate) Apply(a audio.Audio) (audio.Audio, error) {
+	if ssr, ok := a.(supports.SampleRate); ok {
 		srf(ssr.GetSampleRate())
+		return a, nil
 	}
-	return a
+	return a, supports.NewUnsupported([]string{"SampleRate"})
 }

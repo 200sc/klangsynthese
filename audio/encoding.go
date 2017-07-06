@@ -4,25 +4,30 @@ package audio
 // (currently assumed PCM data but that may/will change) into playable Audio
 type Encoding struct {
 	// Consider: non []byte data?
+	// Consider: should Data be a type just like Format and CanLoop?
 	Data []byte
 	Format
 	CanLoop
 }
 
-// Encoding returns itself
+// HasEncoding is the type of any audio with an explicit encoding
+// i.e. individual audio samples as opposed to sequences or composites.
+type HasEncoding interface {
+	GetEncoding() *Encoding
+}
+
+// GetEncoding returns itself
 func (enc *Encoding) GetEncoding() *Encoding {
 	return enc
 }
 
-// We need access to everything we used to create the buffer in order to copy it
+// Copy returns an audio encoded from this encoding.
+// Consider: Copy might be tied to HasEncoding
 func (enc *Encoding) Copy() (Audio, error) {
-	// The error is currently ignored (because presumably you have
-	// already created the Audio and are copying it) but that may
-	// change in the future (the reason it would not is to keep the
-	// api easy, it's troublesome to have to copy on a separate line)
 	return EncodeBytes(*enc)
 }
 
+// MustCopy acts like Copy, but will panic if err != nil
 func (enc *Encoding) MustCopy() Audio {
 	a, err := EncodeBytes(*enc)
 	if err != nil {
@@ -31,10 +36,7 @@ func (enc *Encoding) MustCopy() Audio {
 	return a
 }
 
-// Format stores the variables which are presumably
-// constant for any given type of audio (wav / mp3 / flac ...)
-type Format struct {
-	SampleRate uint32
-	Channels   uint16
-	Bits       uint16
+// GetData satisfies filter.SupportsData
+func (enc *Encoding) GetData() *[]byte {
+	return &enc.Data
 }

@@ -1,15 +1,19 @@
 package filter
 
-import "github.com/200sc/klangsynthese/audio"
+import (
+	"github.com/200sc/klangsynthese/audio"
+	"github.com/200sc/klangsynthese/audio/filter/supports"
+)
 
+// Data filters are functions on []byte types
 type Data func(*[]byte)
-type SupportsData interface {
-	GetData() *[]byte
-}
 
-func (df Data) Apply(a audio.Audio) audio.Audio {
-	if sd, ok := a.(SupportsData); ok {
+// Apply checks that the given audio supports Data, filters if it
+// can, then returns
+func (df Data) Apply(a audio.Audio) (audio.Audio, error) {
+	if sd, ok := a.(supports.Data); ok {
 		df(sd.GetData())
+		return a, nil
 	}
-	return a
+	return a, supports.NewUnsupported([]string{"Data"})
 }

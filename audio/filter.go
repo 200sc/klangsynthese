@@ -10,7 +10,7 @@ package audio
 // a.Copy().Filter(fs) would return a new audio
 // Specific audio implementations could not follow this, however.
 type Filter interface {
-	Apply(Audio) Audio
+	Apply(Audio) (Audio, error)
 }
 
 // CanLoop offers composable looping
