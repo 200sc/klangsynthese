@@ -7,10 +7,6 @@ import (
 	"github.com/200sc/klangsynthese/audio"
 )
 
-type SequenceI interface {
-	audio.Audio
-}
-
 // This is notes / pseudo-code / not useable yet
 
 // A Sequence does not care if it loops because that is audio/Encoding's job
@@ -45,12 +41,14 @@ func (s *Sequence) Play() <-chan error {
 				select {
 				case <-s.stopCh:
 					s.stopCh <- s.Pattern[s.patternIndex].Stop()
+					ch <- nil
 					return
 				case <-s.Ticker.C:
 				}
 				s.patternIndex++
 			}
 			if !s.loop {
+				ch <- nil
 				return
 			}
 		}
@@ -126,7 +124,7 @@ func (s *Sequence) MustCopy() audio.Audio {
 	return a
 }
 
-func (s *Sequence) Combine(s2 *Sequence) (*Sequence, error) {
+func (s *Sequence) Mix(s2 *Sequence) (*Sequence, error) {
 	// Todo: we should be able to combine not-too-disparate
 	// sequences like one that ticks on .5 seconds and one that ticks
 	// on .25 seconds
@@ -141,5 +139,21 @@ func (s *Sequence) Combine(s2 *Sequence) (*Sequence, error) {
 	for i, col := range s2.Pattern {
 		s3.Pattern[i].Audios = append(s3.Pattern[i].Audios, col.Audios...)
 	}
+	return s3, nil
+}
+
+func (s *Sequence) Append(s2 *Sequence) (*Sequence, error) {
+	// Todo: we should be able to combine not-too-disparate
+	// sequences like one that ticks on .5 seconds and one that ticks
+	// on .25 seconds
+	if s.tickDuration != s2.tickDuration {
+		return nil, errors.New("Incompatible sequences")
+	}
+	seq, err := s.Copy()
+	if err != nil {
+		return nil, err
+	}
+	s3 := seq.(*Sequence)
+	s3.Pattern = append(s3.Pattern, s2.Pattern...)
 	return s3, nil
 }
