@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/200sc/klangsynthese/synth"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWaveGenerator(t *testing.T) {
@@ -19,8 +20,8 @@ func TestWaveGenerator(t *testing.T) {
 			synth.G4,
 		),
 		Volumes(16),
-		// Todo: hold pattern
-		// ie hold pitch 1 for 100 ms, pitch 2 for 300 ms, etc
+		Holds(time.Millisecond*150),
+		HoldAt(time.Millisecond*400, 3),
 		Ticks(time.Millisecond*200),
 		Waves(synth.Sin, synth.Saw),
 		Loops(true),
@@ -73,8 +74,10 @@ func TestCombineSeq(t *testing.T) {
 		Loops(true),
 	)
 	sq2 := wg.Generate()
-	sq3, _ := sq.Combine(sq2)
+	sq3, err := sq.Combine(sq2)
+	assert.Nil(t, err)
 	sq3.Play()
 	fmt.Println("Playing sequence")
 	time.Sleep(5 * time.Second)
+	assert.Nil(t, sq3.Stop())
 }

@@ -10,9 +10,10 @@ import (
 
 type WaveGenerator struct {
 	PitchPattern
-	Length
 	WavePattern
 	VolumePattern
+	HoldPattern
+	Length
 	Tick
 	Loop
 }
@@ -34,6 +35,9 @@ func (wg *WaveGenerator) Generate() *Sequence {
 	if wg.Length == 0 {
 		wg.Length = Length(len(wg.PitchPattern))
 	}
+	if len(wg.HoldPattern) == 0 {
+		wg.HoldPattern = []time.Duration{sq.tickDuration}
+	}
 	sq.Pattern = make([]audio.Multi, wg.Length)
 
 	controller := wav.NewController()
@@ -41,15 +45,16 @@ func (wg *WaveGenerator) Generate() *Sequence {
 	pitchIndex := 0
 	volumeIndex := 0
 	waveIndex := 0
-	tickSeconds := time.Duration(wg.Tick).Seconds()
+	holdIndex := 0
 	for i := range sq.Pattern {
 		p := wg.PitchPattern[pitchIndex]
 		if p != synth.Rest {
-			a, _ := controller.Wave(wg.WavePattern[waveIndex](
-				p,
-				tickSeconds,
-				wg.VolumePattern[volumeIndex],
-			))
+			a, _ := controller.Wave(
+				wg.WavePattern[waveIndex](
+					p,
+					wg.HoldPattern[holdIndex].Seconds(),
+					wg.VolumePattern[volumeIndex],
+				))
 			sq.Pattern[i] = audio.Multi{[]audio.Audio{a}}
 		} else {
 			sq.Pattern[i] = audio.Multi{[]audio.Audio{}}
@@ -57,6 +62,7 @@ func (wg *WaveGenerator) Generate() *Sequence {
 		pitchIndex = (pitchIndex + 1) % len(wg.PitchPattern)
 		volumeIndex = (volumeIndex + 1) % len(wg.VolumePattern)
 		waveIndex = (waveIndex + 1) % len(wg.WavePattern)
+		holdIndex = (holdIndex + 1) % len(wg.HoldPattern)
 	}
 	return sq
 }
