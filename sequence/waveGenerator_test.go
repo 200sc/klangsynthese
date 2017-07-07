@@ -25,8 +25,8 @@ func TestWaveGenerator(t *testing.T) {
 		},
 		VolumePattern: []synth.Volume{
 			32,
-			64,
-			96,
+			16,
+			8,
 		},
 		Loop: true,
 	}
@@ -52,9 +52,9 @@ func TestCombineSeq(t *testing.T) {
 			synth.G4,
 		},
 		VolumePattern: []synth.Volume{
+			16,
 			32,
-			64,
-			96,
+			48,
 		},
 		Loop: true,
 	}

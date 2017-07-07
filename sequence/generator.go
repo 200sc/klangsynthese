@@ -4,3 +4,6 @@ package sequence
 type Generator interface {
 	Generate() *Sequence
 }
+
+// Option types are inserted into Constructors to create generators
+type Option func(Generator)

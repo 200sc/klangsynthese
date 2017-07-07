@@ -9,11 +9,19 @@ import (
 )
 
 type WaveGenerator struct {
+	PitchPattern
 	Fn            synth.Wave
 	Tick          time.Duration
-	PitchPattern  []synth.Pitch
 	VolumePattern []synth.Volume
 	Loop          bool
+}
+
+func NewWaveGenerator(opts ...Option) *WaveGenerator {
+	wg := &WaveGenerator{}
+	for _, opt := range opts {
+		opt(wg)
+	}
+	return wg
 }
 
 func (wg *WaveGenerator) Generate() *Sequence {
