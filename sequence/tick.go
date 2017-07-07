@@ -5,15 +5,15 @@ import "time"
 type Tick time.Duration
 
 type HasTicks interface {
-	GetTickPattern() time.Duration
-	SetTickPattern(time.Duration)
+	GetTick() time.Duration
+	SetTick(time.Duration)
 }
 
-func (vp *Tick) GetTickPattern() time.Duration {
+func (vp *Tick) GetTick() time.Duration {
 	return time.Duration(*vp)
 }
 
-func (vp *Tick) SetTickPattern(vs time.Duration) {
+func (vp *Tick) SetTick(vs time.Duration) {
 	*vp = Tick(vs)
 }
 
@@ -21,7 +21,7 @@ func (vp *Tick) SetTickPattern(vs time.Duration) {
 func Ticks(t time.Duration) Option {
 	return func(g Generator) {
 		if ht, ok := g.(HasTicks); ok {
-			ht.SetTickPattern(t)
+			ht.SetTick(t)
 		}
 	}
 }

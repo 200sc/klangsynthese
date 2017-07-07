@@ -18,19 +18,19 @@ func TestWaveGenerator(t *testing.T) {
 			synth.Rest,
 			synth.G4,
 		),
-		Volumes(
-			16,
-			32,
-			48,
-		),
+		Volumes(16),
+		// Todo: hold pattern
+		// ie hold pitch 1 for 100 ms, pitch 2 for 300 ms, etc
 		Ticks(time.Millisecond*200),
-		Waves(synth.Sin),
+		Waves(synth.Sin, synth.Saw),
 		Loops(true),
+		PlayLength(7),
 	)
 	sq := wg.Generate()
 	sq.Play()
 	fmt.Println("Playing sequence")
 	time.Sleep(5 * time.Second)
+	sq.Stop()
 }
 
 func TestCombineSeq(t *testing.T) {
@@ -64,7 +64,12 @@ func TestCombineSeq(t *testing.T) {
 		),
 		Volumes(8),
 		Ticks(time.Millisecond*200),
-		Waves(synth.Square),
+		Waves(
+			synth.Square,
+			synth.Square,
+			synth.Sin,
+			synth.Saw,
+		),
 		Loops(true),
 	)
 	sq2 := wg.Generate()
