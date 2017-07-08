@@ -23,8 +23,13 @@ type Wave func(Pitch, float64, Volume) []byte
 //--__--        --__--
 func Sin(freq Pitch, seconds float64, volume Volume) []byte {
 	wave := make([]byte, int(seconds*float64(SampleRate)*Channels))
-	for i := range wave {
-		wave[i] = byte(float64(volume) * math.Sin(phase(freq, i, SampleRate)))
+	for i := 0; i < len(wave); i += 4 {
+		// Todo: helper to do this for every wave
+		val := int(float64(volume) * math.Sin(phase(freq, i, SampleRate)))
+		wave[i] = byte(val % 256)
+		wave[i+1] = byte(val >> 8)
+		wave[i+2] = wave[i]
+		wave[i+3] = wave[i+1]
 	}
 	return wave
 }

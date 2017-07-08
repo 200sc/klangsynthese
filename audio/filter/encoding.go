@@ -28,14 +28,11 @@ func RightPan() Encoding {
 		}
 		// Zero out one channel
 		swtch := int((*enc.GetBitDepth()) / 8)
-		zero := false
 		d := *data
-		for i := range d {
-			if i%swtch == 0 {
-				zero = !zero
-			}
-			if zero {
-				d[i] = 0
+		for i := 0; i < len(d); i += (2 * swtch) {
+			for j := 0; j < swtch; j++ {
+				d[i+j] = byte((int(d[i+j]) + int(d[i+j+swtch])) / 2)
+				d[i+j+swtch] = 0
 			}
 		}
 		*data = d
@@ -51,14 +48,11 @@ func LeftPan() Encoding {
 		}
 		// Zero out one channel
 		swtch := int((*enc.GetBitDepth()) / 8)
-		zero := true
 		d := *data
-		for i := range d {
-			if i%swtch == 0 {
-				zero = !zero
-			}
-			if zero {
-				d[i] = 0
+		for i := 0; i < len(d); i += (2 * swtch) {
+			for j := 0; j < swtch; j++ {
+				d[i+j+swtch] = byte((int(d[i+j]) + int(d[i+j+swtch])) / 2)
+				d[i+j] = 0
 			}
 		}
 		*data = d

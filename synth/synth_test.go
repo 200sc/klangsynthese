@@ -10,7 +10,7 @@ import (
 )
 
 func TestSinWav(t *testing.T) {
-	testWave(t, Sin(A4, 2, 32))
+	testWave(t, Sin(A4, 2, 2000))
 }
 
 func TestSquareWav(t *testing.T) {
@@ -53,7 +53,7 @@ func TestVolume(t *testing.T) {
 }
 
 func TestPan(t *testing.T) {
-	a, err := wav.NewController().Wave(Sin(A4, 2, 32))
+	a, err := wav.NewController().Wave(Sin(A4, 2, 2000))
 	a2, err2 := a.MustCopy().Filter(filter.RightPan())
 	a3, err3 := a.MustCopy().Filter(filter.LeftPan())
 	assert.Nil(t, err)
