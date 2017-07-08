@@ -1,4 +1,4 @@
-package klangsynthese
+package font
 
 import (
 	"testing"
@@ -11,11 +11,10 @@ import (
 )
 
 func TestFont1(t *testing.T) {
-	f := NewFont()
-	f.Filter(filter.Volume(.25))
+	f := New().Filter(filter.Volume(.25))
 	a, err := wav.NewController().Wave(synth.Sin(synth.A4, 2, 32))
 	assert.Nil(t, err)
-	fa := NewFontAudio(f, a)
+	fa := NewAudio(f, a)
 	fa.Play()
 	fa.Font.Filter(filter.Volume(.5))
 	time.Sleep(2 * time.Second)

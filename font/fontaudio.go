@@ -1,8 +1,8 @@
-package klangsynthese
+package font
 
 import "github.com/200sc/klangsynthese/audio"
 
-// FontAudio is an ease-of-use wrapper around an audio
+// Audio is an ease-of-use wrapper around an audio
 // with an attached font, so that the audio can be played
 // with .Play() but can take in the remotely variable
 // font filter options.
@@ -14,7 +14,7 @@ import "github.com/200sc/klangsynthese/audio"
 // be to have two similarly named functions, and its believed
 // that fa.Font.Filter(...) and fa.Audio.Filter(...) is
 // more or less equivalent to whatever those names would be.
-type FontAudio struct {
+type Audio struct {
 	Font
 	audio.Audio
 }
@@ -22,11 +22,11 @@ type FontAudio struct {
 // NewFontAudio returns a *FontAudio.
 // For preparation against API changes, using NewFontAudio over FontAudio{}
 // is recommended.
-func NewFontAudio(f *Font, a audio.Audio) *FontAudio {
-	return &FontAudio{*f, a}
+func NewAudio(f *Font, a audio.Audio) *Audio {
+	return &Audio{*f, a}
 }
 
 // Play is equivalent to FontAudio.Font.Play(fa.Audio)
-func (fa *FontAudio) Play() <-chan error {
+func (fa *Audio) Play() <-chan error {
 	return fa.Font.Play(fa.Audio)
 }
