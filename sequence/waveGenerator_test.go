@@ -35,6 +35,10 @@ func TestWaveGenerator(t *testing.T) {
 }
 
 func TestMixSeq(t *testing.T) {
+	loopsAndTicks := And(
+		Ticks(time.Millisecond*200),
+		Loops(true),
+	)
 	wg := NewWaveGenerator(
 		Pitches(
 			synth.A4,
@@ -49,9 +53,8 @@ func TestMixSeq(t *testing.T) {
 			32,
 			48,
 		),
-		Ticks(time.Millisecond*200),
 		Waves(synth.Sin),
-		Loops(true),
+		loopsAndTicks,
 	)
 	sq := wg.Generate()
 	wg = NewWaveGenerator(
@@ -64,14 +67,13 @@ func TestMixSeq(t *testing.T) {
 			synth.C4,
 		),
 		Volumes(8),
-		Ticks(time.Millisecond*200),
 		Waves(
 			synth.Square,
 			synth.Square,
 			synth.Sin,
 			synth.Saw,
 		),
-		Loops(true),
+		loopsAndTicks,
 	)
 	sq2 := wg.Generate()
 	sq3, err := sq.Mix(sq2)
