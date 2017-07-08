@@ -24,12 +24,12 @@ func (enc *Encoding) GetEncoding() *Encoding {
 // Copy returns an audio encoded from this encoding.
 // Consider: Copy might be tied to HasEncoding
 func (enc *Encoding) Copy() (Audio, error) {
-	return EncodeBytes(*enc)
+	return EncodeBytes(*enc.copy())
 }
 
 // MustCopy acts like Copy, but will panic if err != nil
 func (enc *Encoding) MustCopy() Audio {
-	a, err := EncodeBytes(*enc)
+	a, err := EncodeBytes(*enc.copy())
 	if err != nil {
 		panic(err)
 	}
@@ -39,4 +39,17 @@ func (enc *Encoding) MustCopy() Audio {
 // GetData satisfies filter.SupportsData
 func (enc *Encoding) GetData() *[]byte {
 	return &enc.Data
+}
+
+// copy for an encoding just copies the encoding data,
+// it does not return an audio.
+func (enc *Encoding) copy() *Encoding {
+	newEnc := new(Encoding)
+	newEnc.Format = enc.Format
+	newEnc.CanLoop = enc.CanLoop
+	newEnc.Data = make([]byte, len(enc.Data))
+	for i, v := range enc.Data {
+		newEnc.Data[i] = v
+	}
+	return newEnc
 }

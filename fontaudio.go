@@ -22,8 +22,8 @@ type FontAudio struct {
 // NewFontAudio returns a *FontAudio.
 // For preparation against API changes, using NewFontAudio over FontAudio{}
 // is recommended.
-func NewFontAudio(f Font, a audio.Audio) *FontAudio {
-	return &FontAudio{f, a}
+func NewFontAudio(f *Font, a audio.Audio) *FontAudio {
+	return &FontAudio{*f, a}
 }
 
 // Play is equivalent to FontAudio.Font.Play(fa.Audio)
