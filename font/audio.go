@@ -19,14 +19,14 @@ type Audio struct {
 	audio.Audio
 }
 
-// NewFontAudio returns a *FontAudio.
-// For preparation against API changes, using NewFontAudio over FontAudio{}
+// NewAudio returns a *FontAudio.
+// For preparation against API changes, using NewAudio over Audio{}
 // is recommended.
 func NewAudio(f *Font, a audio.Audio) *Audio {
 	return &Audio{*f, a}
 }
 
-// Play is equivalent to FontAudio.Font.Play(fa.Audio)
-func (fa *Audio) Play() <-chan error {
-	return fa.Font.Play(fa.Audio)
+// Play is equivalent to Audio.Font.Play(a.Audio)
+func (a *Audio) Play() <-chan error {
+	return a.Font.Play(a.Audio)
 }

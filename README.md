@@ -1,9 +1,6 @@
 # klangsynthese
 Waveform and Audio Synthesis library in Go
 
-This library is right now an idea. 
-The goal of this library is to unify the following features with zero non-go-gettable dependencies:
-
 Klangsynthese right now supports a number of features that will work regardless of OS,
 and a number of features specific to Windows where the hope is to move support to Linux
 and Darwin.
