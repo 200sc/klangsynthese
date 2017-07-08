@@ -56,7 +56,7 @@ func (ds *dsAudio) Filter(fs ...Filter) (Audio, error) {
 			}
 		}
 	}
-	return a, consError
+	return a.MustCopy(), consError
 }
 
 // MustFilter acts like Filter, but ignores errors (it does not panic,

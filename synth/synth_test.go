@@ -1,9 +1,11 @@
 package synth
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/200sc/klangsynthese/audio/filter"
 	"github.com/200sc/klangsynthese/wav"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,6 +40,17 @@ func TestAdd(t *testing.T) {
 			Sin(A4*5, 2, 16),
 			Sin(A4*6, 2, 16),
 		))
+}
+
+func TestVolume(t *testing.T) {
+	a, _ := wav.NewController().Wave(Sin(A4, 2, 32))
+	a2, err := a.Filter(filter.Volume(.5))
+	fmt.Println(a, a2)
+	assert.Nil(t, err)
+	a.Play()
+	time.Sleep(2 * time.Second)
+	a2.Play()
+	time.Sleep(2 * time.Second)
 }
 
 func testWave(t *testing.T, wave []byte) {
