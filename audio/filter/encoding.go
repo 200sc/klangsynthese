@@ -59,6 +59,34 @@ func RightPan() Encoding {
 	}
 }
 
+func Pan(f float64) Encoding {
+	// Todo: test this is accurate
+	if f > 0 {
+		return VolumeBalance(1-f, 1)
+	} else if f < 0 {
+		return VolumeBalance(1, 1-(-1*f))
+	} else {
+		return func(enc supports.Encoding) {
+			data := enc.GetData()
+			// Right/Left only makes sense for 2 channel
+			if *enc.GetChannels() != 2 {
+				return
+			}
+			// Zero out one channel
+			swtch := int((*enc.GetBitDepth()) / 8)
+			d := *data
+			for i := 0; i < len(d); i += (2 * swtch) {
+				for j := 0; j < swtch; j++ {
+					v := byte((int(d[i+j]) + int(d[i+j+swtch])) / 2)
+					d[i+j+swtch] = v
+					d[i+j] = v
+				}
+			}
+			*data = d
+		}
+	}
+}
+
 // Todo: pans that are not absolute
 // problem: information loss
 // we need to find which channel has more data to pull from
@@ -73,9 +101,9 @@ func Volume(mult float64) Encoding {
 		data := enc.GetData()
 		d := *data
 		byteDepth := int(*enc.GetBitDepth() / 8)
-		for i := 0; i < len(d); i += byteDepth {
-			switch byteDepth {
-			case 2:
+		switch byteDepth {
+		case 2:
+			for i := 0; i < len(d); i += byteDepth {
 				var v int16
 				var shift uint16
 				for j := 0; j < byteDepth; j++ {
@@ -87,10 +115,108 @@ func Volume(mult float64) Encoding {
 					d[i+j] = byte(v3 & 255)
 					v3 >>= 8
 				}
-			default:
-				// log unsupported bit depth
-				// 2 4 and 8 should also be supported, as int8 int32 and int64
 			}
+		default:
+			// log unsupported bit depth
+			// 2 4 and 8 should also be supported, as int8 int32 and int64
+		}
+		*data = d
+	}
+}
+
+func VolumeBalance(lMult, rMult float64) Encoding {
+	return func(enc supports.Encoding) {
+		data := enc.GetData()
+		d := *data
+		byteDepth := int(*enc.GetBitDepth() / 8)
+		switch byteDepth {
+		case 2:
+			for i := 0; i < len(d); i += (byteDepth * 2) {
+				var v int16
+				var shift uint16
+				for j := 0; j < byteDepth; j++ {
+					v += int16(int(d[i+j])+int(d[i+j+byteDepth])) / 2 << shift
+					shift += 8
+				}
+				l := round(float64(v) * lMult)
+				r := round(float64(v) * rMult)
+				for j := 0; j < byteDepth; j++ {
+					d[i+j] = byte(l & 255)
+					d[i+j+byteDepth] = byte(r & 255)
+					l >>= 8
+					r >>= 8
+				}
+			}
+		default:
+			// log unsupported bit depth
+			// 2 4 and 8 should also be supported, as int8 int32 and int64
+		}
+		*data = d
+	}
+}
+
+// VolumeLeft acts like volume but reduces left channel volume only
+func VolumeLeft(mult float64) Encoding {
+	return func(enc supports.Encoding) {
+		// Right/Left only makes sense for 2 channel
+		if *enc.GetChannels() != 2 {
+			return
+		}
+		data := enc.GetData()
+		d := *data
+		byteDepth := int(*enc.GetBitDepth() / 8)
+		switch byteDepth {
+		case 2:
+			for i := 0; i < len(d); i += (byteDepth * 2) {
+				var v int16
+				var shift uint16
+				for j := 0; j < byteDepth; j++ {
+					v += int16(d[i+j]) << shift
+					shift += 8
+				}
+				v3 := round(float64(v) * mult)
+				for j := 0; j < byteDepth; j++ {
+					d[i+j] = byte(v3 & 255)
+					v3 >>= 8
+				}
+			}
+		default:
+			// log unsupported bit depth
+			// 2 4 and 8 should also be supported, as int8 int32 and int64
+		}
+		*data = d
+	}
+}
+
+// VolumeRight acts like volume but reduces left channel volume only
+func VolumeRight(mult float64) Encoding {
+	return func(enc supports.Encoding) {
+		// Right/Left only makes sense for 2 channel
+		if *enc.GetChannels() != 2 {
+			return
+		}
+		data := enc.GetData()
+		d := *data
+		byteDepth := int(*enc.GetBitDepth() / 8)
+		switch byteDepth {
+		case 2:
+			for i := byteDepth; i < len(d); i += (byteDepth * 2) {
+
+				var v int16
+				var shift uint16
+				for j := 0; j < byteDepth; j++ {
+					v += int16(d[i+j]) << shift
+					shift += 8
+				}
+				v3 := round(float64(v) * mult)
+				for j := 0; j < byteDepth; j++ {
+					d[i+j] = byte(v3 & 255)
+					v3 >>= 8
+				}
+			}
+		default:
+			// log unsupported bit depth
+			// 2 4 and 8 should also be supported, as int8 int32 and int64
 		}
 		*data = d
 	}
