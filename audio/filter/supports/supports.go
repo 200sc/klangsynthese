@@ -15,8 +15,24 @@ type SampleRate interface {
 	GetSampleRate() *uint32
 }
 
-// Pan types support panning filters for playing in stereo
-type Pan interface {
-	GetPan() float64
-	SetPan(float64)
+// BitDepth types support filters that manipulate bit depth. Probably
+// only useful in combination as an encoding
+type BitDepth interface {
+	GetBitDepth() *uint16
+}
+
+// Channels types support filters that manipulate channels. Probably
+// only useful in combination as an encoding
+type Channels interface {
+	GetChannels() *uint16
+}
+
+// Encoding types can get any variable on an audio.Encoding. They do
+// not just return an audio.Encoding because that would be an import
+// loop or another package to avoid said import loop.
+type Encoding interface {
+	SampleRate
+	BitDepth
+	Data
+	Channels
 }

@@ -12,3 +12,11 @@ type Format struct {
 func (f *Format) GetSampleRate() *uint32 {
 	return &f.SampleRate
 }
+
+func (f *Format) GetChannels() *uint16 {
+	return &f.Channels
+}
+
+func (f *Format) GetBitDepth() *uint16 {
+	return &f.Bits
+}
