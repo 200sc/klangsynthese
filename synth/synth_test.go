@@ -1,7 +1,6 @@
 package synth
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -44,13 +43,13 @@ func TestAdd(t *testing.T) {
 
 func TestVolume(t *testing.T) {
 	a, _ := wav.NewController().Wave(Sin(A4, 2, 32))
-	a2, err := a.Filter(filter.Volume(.5))
-	fmt.Println(a, a2)
+	a2, err := a.MustCopy().Filter(filter.Volume(.5))
 	assert.Nil(t, err)
 	a.Play()
 	time.Sleep(2 * time.Second)
 	a2.Play()
 	time.Sleep(2 * time.Second)
+	// assert that a2 was about half as quiet as a
 }
 
 func testWave(t *testing.T, wave []byte) {

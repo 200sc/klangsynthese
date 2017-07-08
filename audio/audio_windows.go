@@ -56,7 +56,18 @@ func (ds *dsAudio) Filter(fs ...Filter) (Audio, error) {
 			}
 		}
 	}
-	return a.MustCopy(), consError
+	// Consider: this is a significant amount
+	// of work to do just to make this an in-place filter.
+	// would it be worth it to offer both in place and non-inplace
+	// filter functions?
+	a2, err := EncodeBytes(*ds.Encoding)
+	if err != nil {
+		return nil, err
+	}
+	// reassign the contents of ds to be that of the
+	// new audio, so that this filters in place
+	*ds = *a2.(*dsAudio)
+	return ds, consError
 }
 
 // MustFilter acts like Filter, but ignores errors (it does not panic,
