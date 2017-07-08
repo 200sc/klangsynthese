@@ -14,3 +14,9 @@ type Loop interface {
 type SampleRate interface {
 	GetSampleRate() *uint32
 }
+
+// Pan types support panning filters for playing in stereo
+type Pan interface {
+	GetPan() float64
+	SetPan(float64)
+}

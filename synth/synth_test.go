@@ -52,6 +52,21 @@ func TestVolume(t *testing.T) {
 	// assert that a2 was about half as quiet as a
 }
 
+func TestPan(t *testing.T) {
+	a, err := wav.NewController().Wave(Sin(A4, 2, 32))
+	a2, err2 := a.MustCopy().Filter(filter.RightPan())
+	a3, err3 := a.MustCopy().Filter(filter.LeftPan())
+	assert.Nil(t, err)
+	assert.Nil(t, err2)
+	assert.Nil(t, err3)
+	a.Play()
+	time.Sleep(2 * time.Second)
+	a2.Play()
+	time.Sleep(2 * time.Second)
+	a3.Play()
+	time.Sleep(2 * time.Second)
+}
+
 func testWave(t *testing.T, wave []byte) {
 	a, err := wav.NewController().Wave(wave)
 	assert.Nil(t, err)
