@@ -19,7 +19,7 @@ func (enc Encoding) Apply(a audio.Audio) (audio.Audio, error) {
 	return a, supports.NewUnsupported([]string{"Encoding"})
 }
 
-func RightPan() Encoding {
+func LeftPan() Encoding {
 	return func(enc supports.Encoding) {
 		data := enc.GetData()
 		// Right/Left only makes sense for 2 channel
@@ -39,7 +39,7 @@ func RightPan() Encoding {
 	}
 }
 
-func LeftPan() Encoding {
+func RightPan() Encoding {
 	return func(enc supports.Encoding) {
 		data := enc.GetData()
 		// Right/Left only makes sense for 2 channel
@@ -62,3 +62,43 @@ func LeftPan() Encoding {
 // Todo: pans that are not absolute
 // problem: information loss
 // we need to find which channel has more data to pull from
+
+// Volume will magnify the data by mult, increasing or reducing the volume
+// of the output sound. For mult <= 1 this should have no unexpected behavior,
+// although for mult ~= 1 it might not have any effect. More importantly for
+// mult > 1, values may result in the output data clipping over integer overflows,
+// which is presumably not desired behavior.
+func Volume(mult float64) Encoding {
+	return func(enc supports.Encoding) {
+		data := enc.GetData()
+		d := *data
+		byteDepth := int(*enc.GetBitDepth() / 8)
+		for i := 0; i < len(d); i += byteDepth {
+			switch byteDepth {
+			case 2:
+				var v int16
+				var shift uint16
+				for j := 0; j < byteDepth; j++ {
+					v += int16(d[i+j]) << shift
+					shift += 8
+				}
+				v3 := round(float64(v) * mult)
+				for j := 0; j < byteDepth; j++ {
+					d[i+j] = byte(v3 & 255)
+					v3 >>= 8
+				}
+			default:
+				// log unsupported bit depth
+				// 2 4 and 8 should also be supported, as int8 int32 and int64
+			}
+		}
+		*data = d
+	}
+}
+
+func round(f float64) int64 {
+	if f < 0 {
+		return int64(f - .5)
+	}
+	return int64(f + .5)
+}

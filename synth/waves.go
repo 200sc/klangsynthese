@@ -10,8 +10,27 @@ const (
 
 // Thanks to https://en.wikibooks.org/wiki/Sound_Synthesis_Theory/Oscillators_and_Wavetables
 func phase(freq Pitch, i, sampleRate int) float64 {
-	return float64(freq/4) * (float64(i) / float64(SampleRate)) * 2 * math.Pi
+	return float64(freq) * (float64(i) / float64(SampleRate)) * 2 * math.Pi
 }
+
+func bytesFromInts(is []int16, channels int) []byte {
+	wave := make([]byte, len(is)*channels*2)
+	for i := 0; i < len(wave); i += channels * 2 {
+		wave[i] = byte(is[i/4] % 256)
+		wave[i+1] = byte(is[i/4] >> 8)
+		// duplicate the contents across all channels
+		for c := 1; c < channels; c++ {
+			wave[i+(2*c)] = wave[i]
+			wave[i+(2*c)+1] = wave[i+1]
+		}
+	}
+	//fmt.Println(is)
+	//fmt.Println(wave)
+	return wave
+}
+
+// Todo: add controllers for wave generation that have a built in channel count
+// and bit depth, right now all these waves are channel = 2, bitdepth = 16
 
 // A Wave function takes in a volume, pitch, and time and produces a sound wave
 type Wave func(Pitch, float64, Volume) []byte
@@ -22,16 +41,11 @@ type Wave func(Pitch, float64, Volume) []byte
 //      /      \
 //--__--        --__--
 func Sin(freq Pitch, seconds float64, volume Volume) []byte {
-	wave := make([]byte, int(seconds*float64(SampleRate)*Channels))
-	for i := 0; i < len(wave); i += 4 {
-		// Todo: helper to do this for every wave
-		val := int(float64(volume) * math.Sin(phase(freq, i, SampleRate)))
-		wave[i] = byte(val % 256)
-		wave[i+1] = byte(val >> 8)
-		wave[i+2] = wave[i]
-		wave[i+3] = wave[i+1]
+	wave := make([]int16, int(seconds*float64(SampleRate)))
+	for i := 0; i < len(wave); i++ {
+		wave[i] = int16(float64(volume) * math.Sin(phase(freq, i, SampleRate)))
 	}
-	return wave
+	return bytesFromInts(wave, Channels)
 }
 
 // Pulse acts like Square when given a pulse of 2, when given any lesser
@@ -44,16 +58,16 @@ func Sin(freq Pitch, seconds float64, volume Volume) []byte {
 func Pulse(pulse float64) Wave {
 	pulseSwitch := 1 - 2/pulse
 	return func(freq Pitch, seconds float64, volume Volume) []byte {
-		wave := make([]byte, int(seconds*float64(SampleRate)*Channels))
+		wave := make([]int16, int(seconds*float64(SampleRate)))
 		for i := range wave {
 			// alternatively phase % 2pi
 			if math.Sin(phase(freq, i, SampleRate)) > pulseSwitch {
-				wave[i] = byte(volume)
+				wave[i] = int16(volume)
 			} else {
-				wave[i] = byte(-volume)
+				wave[i] = int16(-volume)
 			}
 		}
-		return wave
+		return bytesFromInts(wave, Channels)
 	}
 }
 
@@ -62,18 +76,7 @@ func Pulse(pulse float64) Wave {
 //       _________
 //       |       |
 // ______|       |________
-func Square(freq Pitch, seconds float64, volume Volume) []byte {
-	wave := make([]byte, int(seconds*float64(SampleRate)*Channels))
-	for i := range wave {
-		// alternatively phase % 2pi
-		if math.Sin(phase(freq, i, SampleRate)) > 0 {
-			wave[i] = byte(volume)
-		} else {
-			wave[i] = byte(-volume)
-		}
-	}
-	return wave
-}
+var Square = Pulse(2)
 
 // Saw produces a saw wave
 //
@@ -81,11 +84,11 @@ func Square(freq Pitch, seconds float64, volume Volume) []byte {
 //  / | / | /
 // /  |/  |/
 func Saw(freq Pitch, seconds float64, volume Volume) []byte {
-	wave := make([]byte, int(seconds*float64(SampleRate)*Channels))
+	wave := make([]int16, int(seconds*float64(SampleRate)*Channels))
 	for i := range wave {
-		wave[i] = byte(float64(volume) - (float64(volume) / math.Pi * math.Mod(phase(freq, i, SampleRate), 2*math.Pi)))
+		wave[i] = int16(float64(volume) - (float64(volume) / math.Pi * math.Mod(phase(freq, i, SampleRate), 2*math.Pi)))
 	}
-	return wave
+	return bytesFromInts(wave, Channels)
 }
 
 // Triangle produces a Triangle wave
@@ -94,17 +97,17 @@ func Saw(freq Pitch, seconds float64, volume Volume) []byte {
 //  / \ / \
 // v   v   v
 func Triangle(freq Pitch, seconds float64, volume Volume) []byte {
-	wave := make([]byte, int(seconds*float64(SampleRate)*2))
+	wave := make([]int16, int(seconds*float64(SampleRate)*2))
 	for i := range wave {
 		p := math.Mod(phase(freq, i, SampleRate), 2*math.Pi)
-		m := byte(p * (2 * float64(volume) / math.Pi))
+		m := int16(p * (2 * float64(volume) / math.Pi))
 		if math.Sin(p) > 0 {
-			wave[i] = byte(-volume) + m
+			wave[i] = int16(-volume) + m
 		} else {
-			wave[i] = 3*byte(volume) - m
+			wave[i] = 3*int16(volume) - m
 		}
 	}
-	return wave
+	return bytesFromInts(wave, Channels)
 }
 
 // Could have pulse triangle

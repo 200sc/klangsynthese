@@ -14,19 +14,19 @@ func TestSinWav(t *testing.T) {
 }
 
 func TestSquareWav(t *testing.T) {
-	testWave(t, Square(A4, 2, 32))
+	testWave(t, Square(A4, 2, 2000))
 }
 
 func TestSawWav(t *testing.T) {
-	testWave(t, Saw(A4, 2, 32))
+	testWave(t, Saw(A4, 2, 2000))
 }
 
 func TestTriangleWav(t *testing.T) {
-	testWave(t, Triangle(A4, 2, 32))
+	testWave(t, Triangle(A4, 2, 2000))
 }
 
 func TestPulseWav(t *testing.T) {
-	testWave(t, Pulse(8)(A4, 2, 32))
+	testWave(t, Pulse(8)(A4, 2, 2000))
 }
 
 func TestAdd(t *testing.T) {
@@ -42,8 +42,8 @@ func TestAdd(t *testing.T) {
 }
 
 func TestVolume(t *testing.T) {
-	a, _ := wav.NewController().Wave(Sin(A4, 2, 32))
-	a2, err := a.MustCopy().Filter(filter.Volume(.5))
+	a, _ := wav.NewController().Wave(Sin(A4, 2, 2000))
+	a2, err := a.MustCopy().Filter(filter.Volume(.25))
 	assert.Nil(t, err)
 	a.Play()
 	time.Sleep(2 * time.Second)
