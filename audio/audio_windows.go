@@ -11,7 +11,6 @@ type dsAudio struct {
 	*Encoding
 	*dsound.IDirectSoundBuffer
 	flags dsound.BufferPlayFlag
-	pan   float64
 }
 
 func (ds *dsAudio) Play() <-chan error {

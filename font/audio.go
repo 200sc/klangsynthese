@@ -1,6 +1,10 @@
 package font
 
-import "github.com/200sc/klangsynthese/audio"
+import (
+	"fmt"
+
+	"github.com/200sc/klangsynthese/audio"
+)
 
 // Audio is an ease-of-use wrapper around an audio
 // with an attached font, so that the audio can be played
@@ -15,21 +19,21 @@ import "github.com/200sc/klangsynthese/audio"
 // that fa.Font.Filter(...) and fa.Audio.Filter(...) is
 // more or less equivalent to whatever those names would be.
 type Audio struct {
-	Font
-	audio.Audio
+	*Font
+	audio.FullAudio
 	toStop audio.Audio
 }
 
 // NewAudio returns a *FontAudio.
 // For preparation against API changes, using NewAudio over Audio{}
 // is recommended.
-func NewAudio(f *Font, a audio.Audio) *Audio {
-	return &Audio{*f, a, nil}
+func NewAudio(f *Font, a audio.FullAudio) *Audio {
+	return &Audio{f, a, nil}
 }
 
 // Play is equivalent to Audio.Font.Play(a.Audio)
 func (ad *Audio) Play() <-chan error {
-	a2, err := ad.Audio.Copy()
+	a2, err := ad.FullAudio.Copy()
 	if err != nil {
 		ch := make(chan error)
 		go func() {

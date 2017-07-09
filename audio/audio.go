@@ -1,5 +1,7 @@
 package audio
 
+import "github.com/200sc/klangsynthese/audio/filter/supports"
+
 // Audio represents playable, filterable audio data.
 type Audio interface {
 	// Play returns a channel that will signal when it finishes playing.
@@ -15,4 +17,11 @@ type Audio interface {
 	// Implementing struct-- encoding
 	Copy() (Audio, error)
 	MustCopy() Audio
+}
+
+// FullAudio supports all the built in filters
+type FullAudio interface {
+	Audio
+	supports.Encoding
+	supports.Loop
 }
