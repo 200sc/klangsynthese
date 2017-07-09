@@ -1,12 +1,16 @@
 package ceol
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/200sc/klangsynthese/sequence"
+	"github.com/200sc/klangsynthese/synth"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 )
@@ -111,5 +115,16 @@ func TestReadCeol(t *testing.T) {
 		}
 	}
 	spew.Dump(c)
-	spew.Dump(c.ChordPattern())
+
+	wg := sequence.NewWaveGenerator(
+		sequence.Chords(c.ChordPattern()),
+		sequence.Volumes(2000),
+		sequence.Ticks(DurationFromQuarters(c.Bpm, 1)),
+		sequence.Waves(synth.Saw),
+	)
+	sq := wg.Generate()
+	sq.Play()
+	fmt.Println("Playing sequence")
+	time.Sleep(5 * time.Second)
+	sq.Stop()
 }
