@@ -417,3 +417,7 @@ func (p Pitch) Down(s Step) Pitch {
 	}
 	return allPitches[i-int(s)]
 }
+
+func NoteFromIndex(i int) Pitch {
+	return allPitches[i]
+}

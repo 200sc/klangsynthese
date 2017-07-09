@@ -11,52 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type Ceol struct {
-	Version       int
-	Swing         int
-	Effect        int
-	EffectValue   int
-	Bpm           int
-	PatternLength int
-	BarLength     int
-	Instruments   []Instrument
-	Patterns      []Pattern
-	SongLength    int
-	LoopStart     int
-	LoopEnd       int
-	Arrangement   [][8]int
-}
-
-type Instrument struct {
-	Index        int
-	IsDrumkit    int
-	Palette      int
-	LPFCutoff    int
-	LPFResonance int
-	Volume       int
-}
-
-type Pattern struct {
-	Key        int
-	Scale      int
-	Instrument int
-	Palette    int
-	Notes      []Note
-	Filters    []Filter
-}
-
-type Note struct {
-	PitchIndex int // C4 = 60
-	Length     int
-	Offset     int
-}
-
-type Filter struct {
-	Volume       int
-	LPFCutoff    int
-	LPFResonance int
-}
-
 func TestReadCeol(t *testing.T) {
 	f, err := os.Open("test.ceol")
 	assert.Nil(t, err)
@@ -65,8 +19,8 @@ func TestReadCeol(t *testing.T) {
 	s := string(b)
 	in := strings.Split(s, ",")
 	ints := make([]int, len(in))
-	for i, s := range in {
-		ints[i], err = strconv.Atoi(s)
+	for i := 0; i < len(in)-1; i++ {
+		ints[i], err = strconv.Atoi(in[i])
 		assert.Nil(t, err)
 	}
 	c := Ceol{}
@@ -157,4 +111,5 @@ func TestReadCeol(t *testing.T) {
 		}
 	}
 	spew.Dump(c)
+	spew.Dump(c.ChordPattern())
 }
