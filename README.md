@@ -23,5 +23,6 @@ eventually replace with a custom ALSA audio driver.
 - [x] Creating waveforms (Sin, Square, Saw, ...)
 - [x] Filtering audio samples
 - [x] Creating Sequences of audio samples to play music
-- [ ] Support for non PCM Audio?
-- [ ] Importable soundfonts and patterns (.sf2, .ceol, ...)
+- [x] Importable Bosca Ceoil files (.ceol)
+- [ ] Importable arbitrary instruments
+- [ ] Other Importable soundfonts (.sf2, .dls ...)
