@@ -37,8 +37,7 @@ func (mc *Controller) Load(r io.ReadCloser) (audio.Audio, error) {
 	format := mc.Format()
 	format.SampleRate = wav.SampleRate
 	format.Channels = wav.NumChannels
-	// This might also be WavData.ByteRate / 8, or BitsPerSample
-	format.Bits = wav.BlockAlign * 8 / wav.NumChannels
+	format.Bits = wav.BitsPerSample
 	return audio.EncodeBytes(
 		audio.Encoding{
 			Data:   wav.Data,
@@ -53,6 +52,8 @@ func (mc *Controller) Save(r io.ReadWriter, a audio.Audio) error {
 func (mc *Controller) Format() audio.Format {
 	return format
 }
+
+// The following is a "fork" of verdverm's go-wav library
 
 type WavData struct {
 	bChunkID  [4]byte // B
