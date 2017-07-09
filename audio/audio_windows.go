@@ -22,13 +22,22 @@ func (ds *dsAudio) Play() <-chan error {
 	go func(dsbuff *dsound.IDirectSoundBuffer, flags dsound.BufferPlayFlag, ch chan error) {
 		err := dsbuff.SetCurrentPosition(0)
 		if err != nil {
-			ch <- err
+			select {
+			case ch <- err:
+			default:
+			}
 		} else {
 			err = dsbuff.Play(0, flags)
 			if err != nil {
-				ch <- err
+				select {
+				case ch <- err:
+				default:
+				}
 			} else {
-				ch <- nil
+				select {
+				case ch <- nil:
+				default:
+				}
 			}
 		}
 	}(ds.IDirectSoundBuffer, ds.flags, ch)

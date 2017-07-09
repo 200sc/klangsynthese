@@ -17,16 +17,41 @@ import "github.com/200sc/klangsynthese/audio"
 type Audio struct {
 	Font
 	audio.Audio
+	toStop audio.Audio
 }
 
 // NewAudio returns a *FontAudio.
 // For preparation against API changes, using NewAudio over Audio{}
 // is recommended.
 func NewAudio(f *Font, a audio.Audio) *Audio {
-	return &Audio{*f, a}
+	return &Audio{*f, a, nil}
 }
 
 // Play is equivalent to Audio.Font.Play(a.Audio)
-func (a *Audio) Play() <-chan error {
-	return a.Font.Play(a.Audio)
+func (ad *Audio) Play() <-chan error {
+	a2, err := ad.Audio.Copy()
+	if err != nil {
+		ch := make(chan error)
+		go func() {
+			ch <- err
+		}()
+		return ch
+	}
+	_, err = a2.Filter(ad.Font.Filters...)
+	if err != nil {
+		ch := make(chan error)
+		go func() {
+			ch <- err
+		}()
+		return ch
+	}
+	ad.toStop = a2
+	return a2.Play()
+}
+
+func (a *Audio) Stop() error {
+	if a.toStop != nil {
+		return a.toStop.Stop()
+	}
+	return nil
 }

@@ -78,6 +78,14 @@ func TestPan(t *testing.T) {
 	}
 }
 
+func TestStop(t *testing.T) {
+	a, _ := wav.NewController().Wave(Sin(A4, 1, 2000))
+	<-a.Play()
+	a.Stop()
+	time.Sleep(1 * time.Second)
+	// assert that sound was not heard or was only heard very briefly
+}
+
 func testWave(t *testing.T, wave []byte) {
 	a, err := wav.NewController().Wave(wave)
 	assert.Nil(t, err)

@@ -20,11 +20,15 @@ func (lf Loop) Apply(a audio.Audio) (audio.Audio, error) {
 }
 
 // LoopOn sets the loop to hapen
-func LoopOn(b *bool) {
-	*b = true
+func LoopOn() Loop {
+	return func(b *bool) {
+		*b = true
+	}
 }
 
 // LoopOff sets the loop to not happen
-func LoopOff(b *bool) {
-	*b = false
+func LoopOff() Loop {
+	return func(b *bool) {
+		*b = false
+	}
 }
