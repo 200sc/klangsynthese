@@ -13,4 +13,5 @@
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
 
+# Test files that we can't commit because we don't have the right to
 *nolicense*

@@ -10,17 +10,6 @@ type Encoding struct {
 	CanLoop
 }
 
-// HasEncoding is the type of any audio with an explicit encoding
-// i.e. individual audio samples as opposed to sequences or composites.
-type HasEncoding interface {
-	GetEncoding() *Encoding
-}
-
-// GetEncoding returns itself
-func (enc *Encoding) GetEncoding() *Encoding {
-	return enc
-}
-
 // Copy returns an audio encoded from this encoding.
 // Consider: Copy might be tied to HasEncoding
 func (enc *Encoding) Copy() (Audio, error) {
