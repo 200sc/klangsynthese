@@ -2,120 +2,20 @@ package ceol
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	"strconv"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/200sc/klangsynthese/sequence"
 	"github.com/200sc/klangsynthese/synth"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestReadCeol(t *testing.T) {
 	f, err := os.Open("test.ceol")
 	assert.Nil(t, err)
-	b, err := ioutil.ReadAll(f)
+	c, err := Open(f)
 	assert.Nil(t, err)
-	s := string(b)
-	in := strings.Split(s, ",")
-	ints := make([]int, len(in))
-	for i := 0; i < len(in)-1; i++ {
-		ints[i], err = strconv.Atoi(in[i])
-		assert.Nil(t, err)
-	}
-	c := Ceol{}
-	i := 0
-	c.Version = ints[i]
-	i++
-	c.Swing = ints[i]
-	i++
-	c.Effect = ints[i]
-	i++
-	c.EffectValue = ints[i]
-	i++
-	c.Bpm = ints[i]
-	i++
-	c.PatternLength = ints[i]
-	i++
-	c.BarLength = ints[i]
-	i++
-	nInstruments := ints[i]
-	i++
-	c.Instruments = make([]Instrument, nInstruments)
-	for j := 0; j < nInstruments; j++ {
-		c.Instruments[j].Index = ints[i]
-		i++
-		c.Instruments[j].IsDrumkit = ints[i]
-		i++
-		c.Instruments[j].Palette = ints[i]
-		i++
-		c.Instruments[j].LPFCutoff = ints[i]
-		i++
-		c.Instruments[j].LPFResonance = ints[i]
-		i++
-		c.Instruments[j].Volume = ints[i]
-		i++
-	}
-	nPatterns := ints[i]
-	i++
-	c.Patterns = make([]Pattern, nPatterns)
-	for j := 0; j < nPatterns; j++ {
-		c.Patterns[j].Key = ints[i]
-		i++
-		c.Patterns[j].Scale = ints[i]
-		i++
-		c.Patterns[j].Instrument = ints[i]
-		i++
-		c.Patterns[j].Palette = ints[i]
-		i++
-		nNotes := ints[i]
-		i++
-		c.Patterns[j].Notes = make([]Note, nNotes)
-		for k := 0; k < nNotes; k++ {
-			c.Patterns[j].Notes[k].PitchIndex = ints[i]
-			i++
-			c.Patterns[j].Notes[k].Length = ints[i]
-			i++
-			c.Patterns[j].Notes[k].Offset = ints[i]
-			i++
-			i++ // Dummy value here
-		}
-		hasFilter := ints[i]
-		i++
-		var nFilters int
-		if hasFilter == 1 {
-			nFilters = ints[i]
-			i++
-		}
-		c.Patterns[j].Filters = make([]Filter, nFilters)
-		for k := 0; k < nFilters; k++ {
-			c.Patterns[j].Filters[k].Volume = ints[i]
-			i++
-			c.Patterns[j].Filters[k].LPFCutoff = ints[i]
-			i++
-			c.Patterns[j].Filters[k].LPFResonance = ints[i]
-			i++
-		}
-	}
-	songLength := ints[i]
-	i++
-	c.LoopStart = ints[i]
-	i++
-	c.LoopEnd = ints[i]
-	i++
-	c.Arrangement = make([][8]int, songLength)
-	for j := 0; j < songLength; j++ {
-		for k := 0; k < 8; k++ {
-			c.Arrangement[j][k] = ints[i]
-			i++
-		}
-	}
-	spew.Dump(c)
-
 	wg := sequence.NewWaveGenerator(
 		sequence.Chords(c.ChordPattern()),
 		sequence.Volumes(2000),
