@@ -1,10 +1,6 @@
 package font
 
-import (
-	"fmt"
-
-	"github.com/200sc/klangsynthese/audio"
-)
+import "github.com/200sc/klangsynthese/audio"
 
 // Audio is an ease-of-use wrapper around an audio
 // with an attached font, so that the audio can be played
