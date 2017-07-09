@@ -17,3 +17,12 @@ func (srf SampleRate) Apply(a audio.Audio) (audio.Audio, error) {
 	}
 	return a, supports.NewUnsupported([]string{"SampleRate"})
 }
+
+// Speed might slow down or speed up a sample, but this will probably
+// just effect the perceived pitch of the sample, and a more complicated
+// method is needed to modify speed without modifying perceived pitch
+func Speed(mult float64) SampleRate {
+	return func(sr *uint32) {
+		*sr = uint32(float64(*sr) * mult)
+	}
+}

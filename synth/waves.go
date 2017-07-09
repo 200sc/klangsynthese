@@ -3,6 +3,8 @@ package synth
 import "math"
 
 // Default wave generation variables
+// Todo: add controllers for wave generation that have a built in format
+// and bit depth, right now all these waves are channel = 2, bitdepth = 16, sampleRate = 44100
 const (
 	SampleRate = 44100
 	Channels   = 2
@@ -28,9 +30,6 @@ func bytesFromInts(is []int16, channels int) []byte {
 	//fmt.Println(wave)
 	return wave
 }
-
-// Todo: add controllers for wave generation that have a built in channel count
-// and bit depth, right now all these waves are channel = 2, bitdepth = 16
 
 // A Wave function takes in a volume, pitch, and time and produces a sound wave
 type Wave func(Pitch, float64, Volume) []byte

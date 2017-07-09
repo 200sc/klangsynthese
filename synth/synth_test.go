@@ -86,6 +86,20 @@ func TestStop(t *testing.T) {
 	// assert that sound was not heard or was only heard very briefly
 }
 
+func TestSpeed(t *testing.T) {
+	a, _ := wav.NewController().Wave(Sin(A4, 1, 2000))
+	a2, _ := a.MustCopy().Filter(filter.Speed(.5))
+	a.Play()
+	time.Sleep(1 * time.Second)
+	a2.Play()
+	time.Sleep(2 * time.Second)
+}
+
+func TestPrintFreq(t *testing.T) {
+	wav.NewController().Wave(Sin(A4, .001, 2000))
+	wav.NewController().Wave(Sin(A5, .001, 2000))
+}
+
 func testWave(t *testing.T, wave []byte) {
 	a, err := wav.NewController().Wave(wave)
 	assert.Nil(t, err)

@@ -82,9 +82,6 @@ func (ds *dsAudio) Filter(fs ...Filter) (Audio, error) {
 // MustFilter acts like Filter, but ignores errors (it does not panic,
 // as filter errors are expected to be non-fatal)
 func (ds *dsAudio) MustFilter(fs ...Filter) Audio {
-	var a Audio = ds
-	for _, f := range fs {
-		a, _ = f.Apply(a)
-	}
+	a, _ := ds.Filter(fs...)
 	return a
 }
