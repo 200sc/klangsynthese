@@ -10,8 +10,8 @@ and Darwin.
 | OS       | Wav        | MP3       | FLAC   | OGG |
 | -------- | ---------- | --------- | ------ | --- |
 | Windows  | Load+Play  | Load+Play |        |     |
-| Linux    |            |           |        |     |
-| Darwin   |            |           |        |     |
+| Linux    | Load       | Load      |        |     |
+| Darwin   | Load       | Load      |        |     |
 
 This library wants to be a zero-dependency library (besides Go), which causes issues for
 Linux, and that is why there is no Linux support yet. What will likely happen with this library 
