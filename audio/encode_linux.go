@@ -2,7 +2,10 @@
 
 package audio
 
-import "github.com/vchimishuk/alsa-go"
+import (
+	"github.com/200sc/klangsynthese/audio/filter/supports"
+	"github.com/tryphon/alsa-go"
+)
 
 type alsaAudio struct {
 	*Encoding
@@ -11,11 +14,11 @@ type alsaAudio struct {
 
 func (aa *alsaAudio) Play() <-chan error {
 	ch := make(chan error)
-	go func(){
+	go func() {
 		// Todo: loop? library does not export loop
-		_, err := handle.Write(enc.Data)
+		_, err := aa.Handle.Write(aa.Encoding.Data)
 		ch <- err
-	}
+	}()
 	return ch
 }
 
@@ -25,8 +28,8 @@ func (aa *alsaAudio) Stop() error {
 	return aa.Pause()
 }
 
-func (aa *dsAudio) Filter(fs ...Filter) (Audio, error) {
-	var a Audio = ds
+func (aa *alsaAudio) Filter(fs ...Filter) (Audio, error) {
+	var a Audio = aa
 	var err error
 	var consError supports.ConsError
 	for _, f := range fs {
@@ -45,15 +48,15 @@ func (aa *dsAudio) Filter(fs ...Filter) (Audio, error) {
 // MustFilter acts like Filter, but ignores errors (it does not panic,
 // as filter errors are expected to be non-fatal)
 func (aa *alsaAudio) MustFilter(fs ...Filter) Audio {
-	a, _ := a.Filter(fs...)
+	a, _ := aa.Filter(fs...)
 	return a
 }
 
-func EncodeBytes(enc *Encoding) (Audio, error) {
+func EncodeBytes(enc Encoding) (Audio, error) {
 	handle := alsa.New()
 	err := handle.Open("default", alsa.StreamTypePlayback, alsa.ModeBlock)
 	if err != nil {
-		t.Fatalf("Open failed. %s", err)
+		return nil, err
 	}
 
 	handle.SampleFormat = alsaFormat(enc.Bits)
@@ -64,7 +67,7 @@ func EncodeBytes(enc *Encoding) (Audio, error) {
 		return nil, err
 	}
 	return &alsaAudio{
-		enc,
+		&enc,
 		handle,
 	}, nil
 }
@@ -74,7 +77,7 @@ func alsaFormat(bits uint16) alsa.SampleFormat {
 	case 8:
 		return alsa.SampleFormatS8
 	case 16:
-		return alsa.SampleFormat_S16_LE
+		return alsa.SampleFormatS16LE
 	}
 	return alsa.SampleFormatUnknown
 }
