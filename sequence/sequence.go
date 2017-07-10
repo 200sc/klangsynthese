@@ -1,3 +1,4 @@
+// Package sequence provides generators and options for creating audio sequences
 package sequence
 
 import (

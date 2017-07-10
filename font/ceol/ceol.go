@@ -1,3 +1,4 @@
+// Package ceol provides functionality to handle .ceol files and .ceol encoded data (Bosca Ceoil files)
 package ceol
 
 import (

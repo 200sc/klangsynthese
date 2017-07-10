@@ -1,3 +1,4 @@
+// Package audio provides audio playing and encoding support
 package audio
 
 import "github.com/200sc/klangsynthese/audio/filter/supports"

@@ -1,3 +1,5 @@
+// Package font provides utilities to package together audio manipulations as
+// a 'font'
 package font
 
 import "github.com/200sc/klangsynthese/audio"
