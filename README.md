@@ -7,11 +7,11 @@ and Darwin.
 
 ## OS specific features
 
-| OS       | Wav        | MP3       | FLAC   | OGG |
-| -------- | ---------- | --------- | ------ | --- |
-| Windows  | Load+Play  | Load+Play |        |     |
-| Linux    | Load       | Load      |        |     |
-| Darwin   | Load       | Load      |        |     |
+| OS       | Load | Modify | Save   | Play |
+| -------- | ---- | ------ | ------ | ---- |
+| Windows  | X    | X      |        |  X   |
+| Linux    | X    | X      |        |      |
+| Darwin   | X    | X      |        |      |
 
 This library wants to be a zero-dependency library (besides Go), which causes issues for
 Linux, and that is why there is no Linux support yet. What will likely happen with this library 
@@ -20,6 +20,10 @@ eventually replace with a custom ALSA audio driver.
 
 ## Other features
 
+- [x] Wav support
+- [x] Mp3 support
+- [ ] Flac support
+- [ ] Ogg support
 - [x] Creating waveforms (Sin, Square, Saw, ...)
 - [x] Filtering audio samples
 - [x] Creating Sequences of audio samples to play music
