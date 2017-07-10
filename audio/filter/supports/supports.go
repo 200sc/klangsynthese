@@ -1,3 +1,4 @@
+// Package supports holds interface types for filter supports
 package supports
 
 // Data types support filters that manipulate their raw audio data

@@ -1,3 +1,4 @@
+// Package synth provides functions and types to support waveform synthesis
 package synth
 
 import "math"

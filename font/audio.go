@@ -49,9 +49,10 @@ func (ad *Audio) Play() <-chan error {
 	return a2.Play()
 }
 
-func (a *Audio) Stop() error {
-	if a.toStop != nil {
-		return a.toStop.Stop()
+// Stop stops a font.Audio's playback
+func (ad *Audio) Stop() error {
+	if ad.toStop != nil {
+		return ad.toStop.Stop()
 	}
 	return nil
 }

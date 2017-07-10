@@ -7,6 +7,11 @@ type Multi struct {
 	Audios []Audio
 }
 
+// NewMulti returns a new multi
+func NewMulti(as ...Audio) *Multi {
+	return &Multi{Audios: as}
+}
+
 // Play plays all audios in the Multi ASAP
 func (m *Multi) Play() <-chan error {
 	extCh := make(chan error)

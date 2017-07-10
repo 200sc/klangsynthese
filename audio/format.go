@@ -13,10 +13,12 @@ func (f *Format) GetSampleRate() *uint32 {
 	return &f.SampleRate
 }
 
+// GetChannels satisfies supports.Channels
 func (f *Format) GetChannels() *uint16 {
 	return &f.Channels
 }
 
+// GetBitDepth satisfied supports.BitDepth
 func (f *Format) GetBitDepth() *uint16 {
 	return &f.Bits
 }

@@ -37,8 +37,6 @@ func (enc *Encoding) copy() *Encoding {
 	newEnc.Format = enc.Format
 	newEnc.CanLoop = enc.CanLoop
 	newEnc.Data = make([]byte, len(enc.Data))
-	for i, v := range enc.Data {
-		newEnc.Data[i] = v
-	}
+	copy(newEnc.Data, enc.Data)
 	return newEnc
 }

@@ -1,3 +1,5 @@
+// Package filter provides various audio filters to be applied to audios through the
+// Filter() function
 package filter
 
 import (
