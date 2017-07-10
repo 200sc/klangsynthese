@@ -13,6 +13,7 @@ import (
 
 // Raw Ceol types, holds all information in ceol file
 
+// Ceol represents a complete .ceol file
 type Ceol struct {
 	Version       int
 	Swing         int
@@ -28,6 +29,7 @@ type Ceol struct {
 	Arrangement   [][8]int
 }
 
+// Instrument represents a single entry in a .ceol's instrument block
 type Instrument struct {
 	Index        int
 	IsDrumkit    int
@@ -37,6 +39,7 @@ type Instrument struct {
 	Volume       int
 }
 
+// Pattern represents a single entry in a .ceol's pattern block
 type Pattern struct {
 	Key        int
 	Scale      int
@@ -46,18 +49,22 @@ type Pattern struct {
 	Filters    []Filter
 }
 
+// Note represents a single entry in a .ceol's pattern's note block
 type Note struct {
 	PitchIndex int // C4 = 60
 	Length     int
 	Offset     int
 }
 
+// Filter represents a single entry in a .ceol's pattern's filter block
 type Filter struct {
 	Volume       int
 	LPFCutoff    int
 	LPFResonance int
 }
 
+// ChordPattern converts a Ceol's patterns and arrangement into a playable chord
+// pattern for sequences
 func (c Ceol) ChordPattern() sequence.ChordPattern {
 	chp := sequence.ChordPattern{}
 	chp.Pitches = make([][]synth.Pitch, c.PatternLength*len(c.Arrangement))
@@ -77,12 +84,18 @@ func (c Ceol) ChordPattern() sequence.ChordPattern {
 	return chp
 }
 
+// DurationFromQuarters should not be here, should be in a package
+// managing bpm and time
+// Duration from quarters expects four quarters to occur per beat,
+// (direct complaints at terry cavanagh), and returns a time.Duration
+// for n quarters in the given bpm.
 func DurationFromQuarters(bpm, quarters int) time.Duration {
 	beatTime := time.Duration(60000/bpm) * time.Millisecond
 	quarterTime := beatTime / 4
 	return quarterTime * time.Duration(quarters)
 }
 
+// Open returns a Ceol from an io.Reader
 func Open(r io.Reader) (Ceol, error) {
 	c := Ceol{}
 	b, err := ioutil.ReadAll(r)

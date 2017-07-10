@@ -418,6 +418,8 @@ func (p Pitch) Down(s Step) Pitch {
 	return allPitches[i-int(s)]
 }
 
+// NoteFromIndex is a utility for pitch converters that for some reason have
+// integers representing their notes to get a pitch from said integer
 func NoteFromIndex(i int) Pitch {
 	return allPitches[i]
 }

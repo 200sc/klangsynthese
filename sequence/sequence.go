@@ -19,7 +19,7 @@ type Sequence struct {
 	// Sequences play patterns of audio
 	// everything at Pattern[0] will be simultaneously Play()ed at
 	// Sequence.Play()
-	Pattern      []audio.Multi
+	Pattern      []*audio.Multi
 	patternIndex int
 	// Every tick, the next index in Pattern will be played by a Sequence
 	// until the pattern is over.
@@ -90,13 +90,14 @@ func (s *Sequence) Stop() error {
 func (s *Sequence) Copy() (audio.Audio, error) {
 	var err error
 	s2 := &Sequence{
-		Pattern:      make([]audio.Multi, len(s.Pattern)),
+		Pattern:      make([]*audio.Multi, len(s.Pattern)),
 		Ticker:       time.NewTicker(s.tickDuration),
 		tickDuration: s.tickDuration,
 		stopCh:       make(chan error),
 		loop:         s.loop,
 	}
 	for i := range s2.Pattern {
+		s2.Pattern[i] = new(audio.Multi)
 		s2.Pattern[i].Audios = make([]audio.Audio, len(s.Pattern[i].Audios))
 		for j := range s2.Pattern[i].Audios {
 			// This could make a sequence that reuses the same

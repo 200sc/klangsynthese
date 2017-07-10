@@ -8,6 +8,7 @@ import (
 	"github.com/200sc/klangsynthese/wav"
 )
 
+// A WaveGenerator composes sets of simple waveforms as a sequence
 type WaveGenerator struct {
 	ChordPattern
 	PitchPattern
@@ -19,6 +20,8 @@ type WaveGenerator struct {
 	Loop
 }
 
+// NewWaveGenerator uses optional variadic syntax to enable
+// any variant of a generator to be made
 func NewWaveGenerator(opts ...Option) *WaveGenerator {
 	wg := &WaveGenerator{}
 	for _, opt := range opts {
@@ -27,6 +30,7 @@ func NewWaveGenerator(opts ...Option) *WaveGenerator {
 	return wg
 }
 
+// Generate generates a sequence from this wave generator
 func (wg *WaveGenerator) Generate() *Sequence {
 	sq := &Sequence{}
 	sq.Ticker = time.NewTicker(time.Duration(wg.Tick))
@@ -44,7 +48,7 @@ func (wg *WaveGenerator) Generate() *Sequence {
 	if len(wg.HoldPattern) == 0 {
 		wg.HoldPattern = []time.Duration{sq.tickDuration}
 	}
-	sq.Pattern = make([]audio.Multi, wg.Length)
+	sq.Pattern = make([]*audio.Multi, wg.Length)
 
 	controller := wav.NewController()
 
@@ -62,9 +66,9 @@ func (wg *WaveGenerator) Generate() *Sequence {
 						wg.HoldPattern[holdIndex].Seconds(),
 						wg.VolumePattern[volumeIndex],
 					))
-				sq.Pattern[i] = audio.Multi{[]audio.Audio{a}}
+				sq.Pattern[i] = audio.NewMulti(a)
 			} else {
-				sq.Pattern[i] = audio.Multi{[]audio.Audio{}}
+				sq.Pattern[i] = audio.NewMulti()
 			}
 			pitchIndex = (pitchIndex + 1) % len(wg.PitchPattern)
 			volumeIndex = (volumeIndex + 1) % len(wg.VolumePattern)
@@ -74,7 +78,7 @@ func (wg *WaveGenerator) Generate() *Sequence {
 	} else if len(wg.ChordPattern.Pitches) != 0 {
 		chordIndex := 0
 		for i := range sq.Pattern {
-			mult := audio.Multi{}
+			mult := audio.NewMulti()
 			for j, p := range wg.ChordPattern.Pitches[chordIndex] {
 				a, _ := controller.Wave(
 					wg.WavePattern[waveIndex](

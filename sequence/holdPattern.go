@@ -2,26 +2,26 @@ package sequence
 
 import "time"
 
+// A HoldPattern is a pattern that might loop on itself for how long notes
+// should be held
 type HoldPattern []time.Duration
 
+// HasHolds enables generators to be built from HoldPattern and use the
+// related option functions
 type HasHolds interface {
-	GetHoldPattern() []time.Duration
-	SetHoldPattern([]time.Duration)
+	GetHoldPattern() *[]time.Duration
 }
 
-func (hp *HoldPattern) GetHoldPattern() []time.Duration {
-	return *hp
-}
-
-func (hp *HoldPattern) SetHoldPattern(ts []time.Duration) {
-	*hp = ts
+// GetHoldPattern lets composing HoldPattern satisfy HasHolds
+func (hp *HoldPattern) GetHoldPattern() *HoldPattern {
+	return hp
 }
 
 // Holds sets the generator's Hold pattern
 func Holds(vs ...time.Duration) Option {
 	return func(g Generator) {
 		if hhs, ok := g.(HasHolds); ok {
-			hhs.SetHoldPattern(vs)
+			*hhs.GetHoldPattern() = vs
 		}
 	}
 }
@@ -35,7 +35,8 @@ func HoldAt(t time.Duration, n int) Option {
 		if hhs, ok := g.(HasHolds); ok {
 			if hl, ok := hhs.(HasLength); ok {
 				if hl.GetLength() < n {
-					Holds := hhs.GetHoldPattern()
+					hp := hhs.GetHoldPattern()
+					Holds := *hp
 					if len(Holds) == 0 {
 						return
 					}
@@ -50,7 +51,7 @@ func HoldAt(t time.Duration, n int) Option {
 						Holds = append(Holds, Holds...)
 					}
 					Holds[n] = t
-					hhs.SetHoldPattern(Holds)
+					*hp = Holds
 				}
 			}
 		}
@@ -63,12 +64,13 @@ func HoldAt(t time.Duration, n int) Option {
 func HoldPatternAt(t time.Duration, n int) Option {
 	return func(g Generator) {
 		if hhs, ok := g.(HasHolds); ok {
-			Holds := hhs.GetHoldPattern()
+			hp := hhs.GetHoldPattern()
+			Holds := *hp
 			if len(Holds) <= n {
 				return
 			}
 			Holds[n] = t
-			hhs.SetHoldPattern(Holds)
+			*hp = Holds
 		}
 	}
 }

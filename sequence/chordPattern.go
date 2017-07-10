@@ -6,29 +6,31 @@ import (
 	"github.com/200sc/klangsynthese/synth"
 )
 
+// A ChordPattern represents the order of pitches and holds
+// for each of those pitches over a sequence of (potential)
+// chords. Todo: pitchPattern is a subset of this, should
+// it even exist?
 type ChordPattern struct {
 	Pitches [][]synth.Pitch
 	Holds   [][]time.Duration
 }
 
+// HasChords lets generators be built from chord Options
+// if they have a pointer to a chord pattern
 type HasChords interface {
-	GetChordPattern() ChordPattern
-	SetChordPattern(ChordPattern)
+	GetChordPattern() *ChordPattern
 }
 
-func (cp *ChordPattern) GetChordPattern() ChordPattern {
-	return *cp
+// GetChordPattern returns a pointer to a generator's chord pattern
+func (cp *ChordPattern) GetChordPattern() *ChordPattern {
+	return cp
 }
 
-func (cp *ChordPattern) SetChordPattern(cs ChordPattern) {
-	*cp = cs
-}
-
-// Pitches sets the generator's pitch pattern
+// Chords sets the generator's chord pattern
 func Chords(cp ChordPattern) Option {
 	return func(g Generator) {
 		if hcp, ok := g.(HasChords); ok {
-			hcp.SetChordPattern(cp)
+			*(hcp.GetChordPattern()) = cp
 		}
 	}
 }

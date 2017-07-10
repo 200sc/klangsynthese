@@ -19,6 +19,7 @@ func (enc Encoding) Apply(a audio.Audio) (audio.Audio, error) {
 	return a, supports.NewUnsupported([]string{"Encoding"})
 }
 
+// LeftPan filters audio to only play on the left speaker
 func LeftPan() Encoding {
 	return func(enc supports.Encoding) {
 		data := enc.GetData()
@@ -39,6 +40,7 @@ func LeftPan() Encoding {
 	}
 }
 
+// RightPan filters audio to only play on the right speaker
 func RightPan() Encoding {
 	return func(enc supports.Encoding) {
 		data := enc.GetData()
@@ -59,6 +61,9 @@ func RightPan() Encoding {
 	}
 }
 
+// Pan takes -1 <= f <= 1.
+// An f of -1 represents a full pan to the left, a pan of 1 represents
+// a full pan to the right.
 func Pan(f float64) Encoding {
 	// Todo: test this is accurate
 	if f > 0 {
@@ -86,10 +91,6 @@ func Pan(f float64) Encoding {
 		}
 	}
 }
-
-// Todo: pans that are not absolute
-// problem: information loss
-// we need to find which channel has more data to pull from
 
 // Volume will magnify the data by mult, increasing or reducing the volume
 // of the output sound. For mult <= 1 this should have no unexpected behavior,
@@ -124,6 +125,8 @@ func Volume(mult float64) Encoding {
 	}
 }
 
+// VolumeBalance will filter audio on two channels such that the left channel
+// is (l+r)/2 * lMult, and the right channel is (l+r)/2 * rMult
 func VolumeBalance(lMult, rMult float64) Encoding {
 	return func(enc supports.Encoding) {
 		data := enc.GetData()

@@ -6,6 +6,7 @@ type Unsupported struct {
 	filters []string
 }
 
+// NewUnsupported returns an Unsupported error with the input filters
 func NewUnsupported(filters []string) Unsupported {
 	return Unsupported{filters}
 }
