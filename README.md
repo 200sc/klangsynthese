@@ -23,7 +23,7 @@ Binaries built with this will probably need alsa-base as well to run on Linux.
 
 - [x] Wav support
 - [x] Mp3 support
-- [ ] Flac support
+- [x] Flac support?
 - [ ] Ogg support
 - [x] Creating waveforms (Sin, Square, Saw, ...)
 - [x] Filtering audio samples
