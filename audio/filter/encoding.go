@@ -129,6 +129,9 @@ func Volume(mult float64) Encoding {
 // is (l+r)/2 * lMult, and the right channel is (l+r)/2 * rMult
 func VolumeBalance(lMult, rMult float64) Encoding {
 	return func(enc supports.Encoding) {
+		if *enc.GetChannels() != 2 {
+			return
+		}
 		data := enc.GetData()
 		d := *data
 		byteDepth := int(*enc.GetBitDepth() / 8)
@@ -222,6 +225,36 @@ func VolumeRight(mult float64) Encoding {
 			// 2 4 and 8 should also be supported, as int8 int32 and int64
 		}
 		*data = d
+	}
+}
+
+// AssertStereo does nothing to audio that has two channels, but will convert
+// mono audio to two-channeled audio with the same data on both channels
+func AssertStereo() Encoding {
+	return func(enc supports.Encoding) {
+		chs := enc.GetChannels()
+		if *chs > 1 {
+			// We can't really do this for non-mono audio
+			return
+		}
+		*chs = 2
+		data := enc.GetData()
+		d := *data
+		newData := make([]byte, len(d)*2)
+		byteDepth := int(*enc.GetBitDepth() / 8)
+		switch byteDepth {
+		case 2:
+			for i := 0; i < len(d); i += 2 {
+				for j := 0; j < byteDepth; j++ {
+					newData[i*2+j] = d[i+j]
+					newData[i*2+j+byteDepth] = d[i+j]
+				}
+			}
+		default:
+			// log unsupported bit depth
+			// 2 4 and 8 should also be supported, as int8 int32 and int64
+		}
+		*data = newData
 	}
 }
 

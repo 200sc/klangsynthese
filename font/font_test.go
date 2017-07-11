@@ -24,5 +24,4 @@ func TestFont1(t *testing.T) {
 	time.Sleep(2 * time.Second)
 	fa.Play()
 	time.Sleep(2 * time.Second)
-
 }
