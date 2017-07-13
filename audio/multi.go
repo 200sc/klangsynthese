@@ -1,6 +1,10 @@
 package audio
 
-import "github.com/200sc/klangsynthese/audio/filter/supports"
+import (
+	"time"
+
+	"github.com/200sc/klangsynthese/audio/filter/supports"
+)
 
 // A Multi lets lists of audios be used simultaneously
 type Multi struct {
@@ -82,4 +86,16 @@ func (m *Multi) MustCopy() Audio {
 		panic(err)
 	}
 	return m2
+}
+
+// PlayLength returns how long this audio will play for
+func (m *Multi) PlayLength() time.Duration {
+	var d time.Duration
+	for _, a := range m.Audios {
+		d2 := a.PlayLength()
+		if d < d2 {
+			d = d2
+		}
+	}
+	return d
 }

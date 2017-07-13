@@ -1,48 +1,51 @@
 package synth
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/200sc/klangsynthese/audio/filter"
-	"github.com/200sc/klangsynthese/wav"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSinWav(t *testing.T) {
-	testWave(t, Sin(A4, 2, 2000))
+	a, err := Int16.Sin()
+	assert.Nil(t, err)
+	a.Play()
+	time.Sleep(Int16.PlayLength())
 }
 
 func TestSquareWav(t *testing.T) {
-	testWave(t, Square(A4, 2, 2000))
+	a, err := Int16.Square()
+	assert.Nil(t, err)
+	a.Play()
+	time.Sleep(Int16.PlayLength())
 }
 
 func TestSawWav(t *testing.T) {
-	testWave(t, Saw(A4, 2, 2000))
+	a, err := Int16.Saw()
+	assert.Nil(t, err)
+	a.Play()
+	time.Sleep(Int16.PlayLength())
 }
 
 func TestTriangleWav(t *testing.T) {
-	testWave(t, Triangle(A4, 2, 2000))
+	a, err := Int16.Triangle()
+	assert.Nil(t, err)
+	a.Play()
+	time.Sleep(Int16.PlayLength())
 }
 
 func TestPulseWav(t *testing.T) {
-	testWave(t, Pulse(8)(A4, 2, 2000))
-}
-
-func TestAdd(t *testing.T) {
-	testWave(t,
-		//	i.e harmonics
-		Add(Sin(A4, 2, 16),
-			Sin(A4*2, 2, 16),
-			Sin(A4*3, 2, 16),
-			Sin(A4*4, 2, 16),
-			Sin(A4*5, 2, 16),
-			Sin(A4*6, 2, 16),
-		))
+	a, err := Int16.Pulse(8)()
+	assert.Nil(t, err)
+	a.Play()
+	time.Sleep(Int16.PlayLength())
 }
 
 func TestVolume(t *testing.T) {
-	a, _ := wav.NewController().Wave(Sin(A4, 1, 2000))
+	a, _ := Int16.Sin()
 	a2, err := a.MustCopy().Filter(filter.Volume(.25))
 	a3, _ := a.MustCopy().Filter(filter.VolumeRight(.5))
 	a4, _ := a.MustCopy().Filter(filter.VolumeLeft(.5))
@@ -58,28 +61,29 @@ func TestVolume(t *testing.T) {
 }
 
 func TestPan(t *testing.T) {
-	a, err := wav.NewController().Wave(Sin(A4, 1, 2000))
+	a, err := Int16.Sin()
 	a2, err2 := a.MustCopy().Filter(filter.RightPan())
 	a3, err3 := a.MustCopy().Filter(filter.LeftPan())
 	assert.Nil(t, err)
 	assert.Nil(t, err2)
 	assert.Nil(t, err3)
 	a.Play()
-	time.Sleep(1 * time.Second)
+	fmt.Println(a.PlayLength())
+	time.Sleep(a.PlayLength())
 	a2.Play()
-	time.Sleep(1 * time.Second)
+	time.Sleep(a2.PlayLength())
 	a3.Play()
-	time.Sleep(1 * time.Second)
-	a5, _ := wav.NewController().Wave(Sin(A4, .1, 2000))
+	time.Sleep(a3.PlayLength())
+	a5, _ := Int16.Sin(Duration(100 * time.Millisecond))
 	for p := -1.0; p < 1; p += 0.04 {
 		a6, _ := a5.MustCopy().Filter(filter.Pan(p))
 		a6.Play()
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(a6.PlayLength())
 	}
 }
 
 func TestStop(t *testing.T) {
-	a, _ := wav.NewController().Wave(Sin(A4, 1, 2000))
+	a, _ := Int16.Sin()
 	<-a.Play()
 	a.Stop()
 	time.Sleep(1 * time.Second)
@@ -87,23 +91,10 @@ func TestStop(t *testing.T) {
 }
 
 func TestSpeed(t *testing.T) {
-	a, _ := wav.NewController().Wave(Sin(A4, 1, 2000))
+	a, _ := Int16.Sin()
 	a2, _ := a.MustCopy().Filter(filter.Speed(.5))
 	a.Play()
 	time.Sleep(1 * time.Second)
 	a2.Play()
-	time.Sleep(2 * time.Second)
-}
-
-func TestPrintFreq(t *testing.T) {
-	wav.NewController().Wave(Sin(A4, .001, 2000))
-	wav.NewController().Wave(Sin(A5, .001, 2000))
-}
-
-func testWave(t *testing.T, wave []byte) {
-	a, err := wav.NewController().Wave(wave)
-	assert.Nil(t, err)
-	err = <-a.Play()
-	assert.Nil(t, err)
 	time.Sleep(2 * time.Second)
 }

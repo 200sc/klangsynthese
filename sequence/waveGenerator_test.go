@@ -23,7 +23,7 @@ func TestWaveGenerator(t *testing.T) {
 		Holds(time.Millisecond*150),
 		HoldAt(time.Millisecond*400, 3),
 		Ticks(time.Millisecond*200),
-		Waves(synth.Sin, synth.Saw),
+		Waves(synth.Int16.Sin, synth.Int16.Saw),
 		Loops(true),
 		PlayLength(7),
 	)
@@ -53,7 +53,7 @@ func TestMixSeq(t *testing.T) {
 			2500,
 			3000,
 		),
-		Waves(synth.Sin),
+		Waves(synth.Int16.Sin),
 		loopsAndTicks,
 	)
 	sq := wg.Generate()
@@ -68,10 +68,10 @@ func TestMixSeq(t *testing.T) {
 		),
 		Volumes(500),
 		Waves(
-			synth.Square,
-			synth.Square,
-			synth.Sin,
-			synth.Saw,
+			synth.Int16.Square,
+			synth.Int16.Square,
+			synth.Int16.Sin,
+			synth.Int16.Saw,
 		),
 		loopsAndTicks,
 	)
@@ -100,7 +100,7 @@ func TestAppendSeq(t *testing.T) {
 			3000,
 		),
 		Ticks(time.Millisecond*200),
-		Waves(synth.Sin),
+		Waves(synth.Int16.Sin),
 		Loops(true),
 	)
 	sq := wg.Generate()
@@ -116,10 +116,10 @@ func TestAppendSeq(t *testing.T) {
 		Volumes(500),
 		Ticks(time.Millisecond*200),
 		Waves(
-			synth.Square,
-			synth.Square,
-			synth.Sin,
-			synth.Saw,
+			synth.Int16.Square,
+			synth.Int16.Square,
+			synth.Int16.Sin,
+			synth.Int16.Saw,
 		),
 		Loops(true),
 	)

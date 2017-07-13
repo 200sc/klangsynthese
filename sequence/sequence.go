@@ -32,6 +32,7 @@ type Sequence struct {
 	loop         bool
 }
 
+// Play on a sequence plays the pattern encoded in the sequence until stopped
 func (s *Sequence) Play() <-chan error {
 	ch := make(chan error)
 	go func() {
@@ -57,6 +58,7 @@ func (s *Sequence) Play() <-chan error {
 	return ch
 }
 
+// Filter for a sequence does nothing yet
 func (s *Sequence) Filter(fs ...audio.Filter) (audio.Audio, error) {
 	// Filter on a sequence just applies the filter to all audios..
 	// but it can't do that always, what if the filter is Loop?
@@ -78,16 +80,19 @@ func (s *Sequence) Filter(fs ...audio.Filter) (audio.Audio, error) {
 	return s, nil
 }
 
+// MustFilter acts as filter, but does not respect errors.
 func (s *Sequence) MustFilter(fs ...audio.Filter) audio.Audio {
 	a, _ := s.Filter(fs...)
 	return a
 }
 
+// Stop stops a sequence
 func (s *Sequence) Stop() error {
 	s.stopCh <- nil
 	return <-s.stopCh
 }
 
+// Copy copies a sequence
 func (s *Sequence) Copy() (audio.Audio, error) {
 	var err error
 	s2 := &Sequence{
@@ -118,6 +123,7 @@ func (s *Sequence) Copy() (audio.Audio, error) {
 	return s2, nil
 }
 
+// MustCopy acts as copy but panics on errors
 func (s *Sequence) MustCopy() audio.Audio {
 	a, err := s.Copy()
 	if err != nil {
@@ -126,6 +132,13 @@ func (s *Sequence) MustCopy() audio.Audio {
 	return a
 }
 
+// PlayLength returns how long this sequence will play before looping or stopping.
+// This does not include how long the last note is held beyond the tick duration
+func (s *Sequence) PlayLength() time.Duration {
+	return time.Duration(len(s.Pattern)) * s.tickDuration
+}
+
+// Mix combines two sequences
 func (s *Sequence) Mix(s2 *Sequence) (*Sequence, error) {
 	// Todo: we should be able to combine not-too-disparate
 	// sequences like one that ticks on .5 seconds and one that ticks
@@ -144,6 +157,7 @@ func (s *Sequence) Mix(s2 *Sequence) (*Sequence, error) {
 	return s3, nil
 }
 
+// Append creates a sequence by combining two sequences in order
 func (s *Sequence) Append(s2 *Sequence) (*Sequence, error) {
 	// Todo: we should be able to combine not-too-disparate
 	// sequences like one that ticks on .5 seconds and one that ticks

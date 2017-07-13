@@ -10,19 +10,20 @@ and Darwin.
 | OS       | Load | Modify | Save   | Play |
 | -------- | ---- | ------ | ------ | ---- |
 | Windows  | X    | X      |        |  X   |
-| Linux    | X    | X      |        |      |
+| Linux    | X    | X      |        |  ?   |
 | Darwin   | X    | X      |        |      |
 
-This library wants to be a zero-dependency library (besides Go), which causes issues for
-Linux, and that is why there is no Linux support yet. What will likely happen with this library 
-is that we will have a sad, temporary dependencied solution for non-Windows that we will
-eventually replace with a custom ALSA audio driver. 
+To develop with linux you'll need alsa:
+
+`sudo apt-get install alsa-base libasound2-dev`
+
+Binaries built with this will probably need alsa-base as well to run on Linux.
 
 ## Other features
 
 - [x] Wav support
 - [x] Mp3 support
-- [ ] Flac support
+- [x] Flac support?
 - [ ] Ogg support
 - [x] Creating waveforms (Sin, Square, Saw, ...)
 - [x] Filtering audio samples

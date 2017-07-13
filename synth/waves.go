@@ -1,19 +1,18 @@
 // Package synth provides functions and types to support waveform synthesis
 package synth
 
-import "math"
+import (
+	"math"
 
-// Default wave generation variables
-// Todo: add controllers for wave generation that have a built in format
-// and bit depth, right now all these waves are channel = 2, bitdepth = 16, sampleRate = 44100
-const (
-	SampleRate = 44100
-	Channels   = 2
+	"github.com/200sc/klangsynthese/audio"
 )
 
+// Wave functions take a set of options and return an audio
+type Wave func(opts ...Option) (audio.Audio, error)
+
 // Thanks to https://en.wikibooks.org/wiki/Sound_Synthesis_Theory/Oscillators_and_Wavetables
-func phase(freq Pitch, i, sampleRate int) float64 {
-	return float64(freq) * (float64(i) / float64(SampleRate)) * 2 * math.Pi
+func phase(freq Pitch, i int, sampleRate uint32) float64 {
+	return float64(freq) * (float64(i) / float64(sampleRate)) * 2 * math.Pi
 }
 
 func bytesFromInts(is []int16, channels int) []byte {
@@ -27,25 +26,30 @@ func bytesFromInts(is []int16, channels int) []byte {
 			wave[i+(2*c)+1] = wave[i+1]
 		}
 	}
-	//fmt.Println(is)
-	//fmt.Println(wave)
+	wave = append(wave, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 	return wave
 }
-
-// A Wave function takes in a volume, pitch, and time and produces a sound wave
-type Wave func(Pitch, float64, Volume) []byte
 
 // Sin produces a Sin wave
 //         __
 //       --  --
 //      /      \
 //--__--        --__--
-func Sin(freq Pitch, seconds float64, volume Volume) []byte {
-	wave := make([]int16, int(seconds*float64(SampleRate)))
-	for i := 0; i < len(wave); i++ {
-		wave[i] = int16(float64(volume) * math.Sin(phase(freq, i, SampleRate)))
+func (s Source) Sin(opts ...Option) (audio.Audio, error) {
+
+	s = s.Update(opts...)
+
+	var b []byte
+	switch s.Bits {
+	case 16:
+		s.Volume *= 65535 / 2
+		wave := make([]int16, int(s.Seconds*float64(s.SampleRate)))
+		for i := 0; i < len(wave); i++ {
+			wave[i] = int16(s.Volume * math.Sin(s.Phase(i)))
+		}
+		b = bytesFromInts(wave, int(s.Channels))
 	}
-	return bytesFromInts(wave, Channels)
+	return s.Wave(b)
 }
 
 // Pulse acts like Square when given a pulse of 2, when given any lesser
@@ -55,19 +59,27 @@ func Sin(freq Pitch, seconds float64, volume Volume) []byte {
 //     __    __
 //     ||    ||
 // ____||____||____
-func Pulse(pulse float64) Wave {
+func (s Source) Pulse(pulse float64) Wave {
 	pulseSwitch := 1 - 2/pulse
-	return func(freq Pitch, seconds float64, volume Volume) []byte {
-		wave := make([]int16, int(seconds*float64(SampleRate)))
-		for i := range wave {
-			// alternatively phase % 2pi
-			if math.Sin(phase(freq, i, SampleRate)) > pulseSwitch {
-				wave[i] = int16(volume)
-			} else {
-				wave[i] = int16(-volume)
+	return func(opts ...Option) (audio.Audio, error) {
+		s = s.Update(opts...)
+
+		var b []byte
+		switch s.Bits {
+		case 16:
+			s.Volume *= 65535 / 2
+			wave := make([]int16, int(s.Seconds*float64(s.SampleRate)))
+			for i := range wave {
+				// alternatively phase % 2pi
+				if math.Sin(s.Phase(i)) > pulseSwitch {
+					wave[i] = int16(s.Volume)
+				} else {
+					wave[i] = int16(-s.Volume)
+				}
 			}
+			b = bytesFromInts(wave, int(s.Channels))
 		}
-		return bytesFromInts(wave, Channels)
+		return s.Wave(b)
 	}
 }
 
@@ -76,19 +88,29 @@ func Pulse(pulse float64) Wave {
 //       _________
 //       |       |
 // ______|       |________
-var Square = Pulse(2)
+func (s Source) Square(opts ...Option) (audio.Audio, error) {
+	return s.Pulse(2)(opts...)
+}
 
 // Saw produces a saw wave
 //
 //   ^   ^   ^
 //  / | / | /
 // /  |/  |/
-func Saw(freq Pitch, seconds float64, volume Volume) []byte {
-	wave := make([]int16, int(seconds*float64(SampleRate)*Channels))
-	for i := range wave {
-		wave[i] = int16(float64(volume) - (float64(volume) / math.Pi * math.Mod(phase(freq, i, SampleRate), 2*math.Pi)))
+func (s Source) Saw(opts ...Option) (audio.Audio, error) {
+	s = s.Update(opts...)
+
+	var b []byte
+	switch s.Bits {
+	case 16:
+		s.Volume *= 65535 / 2
+		wave := make([]int16, int(s.Seconds*float64(s.SampleRate)))
+		for i := range wave {
+			wave[i] = int16(s.Volume - (s.Volume / math.Pi * math.Mod(s.Phase(i), 2*math.Pi)))
+		}
+		b = bytesFromInts(wave, int(s.Channels))
 	}
-	return bytesFromInts(wave, Channels)
+	return s.Wave(b)
 }
 
 // Triangle produces a Triangle wave
@@ -96,42 +118,26 @@ func Saw(freq Pitch, seconds float64, volume Volume) []byte {
 //   ^   ^
 //  / \ / \
 // v   v   v
-func Triangle(freq Pitch, seconds float64, volume Volume) []byte {
-	wave := make([]int16, int(seconds*float64(SampleRate)*2))
-	for i := range wave {
-		p := math.Mod(phase(freq, i, SampleRate), 2*math.Pi)
-		m := int16(p * (2 * float64(volume) / math.Pi))
-		if math.Sin(p) > 0 {
-			wave[i] = int16(-volume) + m
-		} else {
-			wave[i] = 3*int16(volume) - m
+func (s Source) Triangle(opts ...Option) (audio.Audio, error) {
+	s = s.Update(opts...)
+
+	var b []byte
+	switch s.Bits {
+	case 16:
+		s.Volume *= 65535 / 2
+		wave := make([]int16, int(s.Seconds*float64(s.SampleRate)))
+		for i := range wave {
+			p := math.Mod(s.Phase(i), 2*math.Pi)
+			m := int16(p * (2 * float64(s.Volume) / math.Pi))
+			if math.Sin(p) > 0 {
+				wave[i] = int16(-s.Volume) + m
+			} else {
+				wave[i] = 3*int16(s.Volume) - m
+			}
 		}
+		b = bytesFromInts(wave, int(s.Channels))
 	}
-	return bytesFromInts(wave, Channels)
+	return s.Wave(b)
 }
 
 // Could have pulse triangle
-
-// Reverse is included here so Reverse(Saw(...)) and the like can be written
-func Reverse(wave []byte) []byte {
-	for i := 0; i < len(wave)/2; i++ {
-		j := len(wave) - i - 1
-		wave[i], wave[j] = wave[j], wave[i]
-	}
-	return wave
-}
-
-// Add is a utility to add together all indices in the given waves.
-// You need to send waves of the same length to Add, right now Add does
-// not check that you are doing that. (strictly speaking, the first wave
-// just needs to be as long as the longest following wave, all remaining
-// waves can be of a shorter length than the first)
-func Add(waves ...[]byte) []byte {
-	wave := waves[0]
-	for j := 1; j < len(waves); j++ {
-		for i, v := range waves[j] {
-			wave[i] += v
-		}
-	}
-	return wave
-}

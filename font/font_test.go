@@ -7,13 +7,12 @@ import (
 	"github.com/200sc/klangsynthese/audio"
 	"github.com/200sc/klangsynthese/audio/filter"
 	"github.com/200sc/klangsynthese/synth"
-	"github.com/200sc/klangsynthese/wav"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFont1(t *testing.T) {
 	f := New().Filter(filter.Volume(.25))
-	a, err := wav.NewController().Wave(synth.Sin(synth.A4, 2, 2000))
+	a, err := synth.Int16.Sin()
 	assert.Nil(t, err)
 	fa := NewAudio(f, a.(audio.FullAudio))
 	fa.Play()
@@ -24,5 +23,4 @@ func TestFont1(t *testing.T) {
 	time.Sleep(2 * time.Second)
 	fa.Play()
 	time.Sleep(2 * time.Second)
-
 }

@@ -1,5 +1,7 @@
 package audio
 
+import "time"
+
 // Encoding contains all information required to convert raw data
 // (currently assumed PCM data but that may/will change) into playable Audio
 type Encoding struct {
@@ -28,6 +30,15 @@ func (enc *Encoding) MustCopy() Audio {
 // GetData satisfies filter.SupportsData
 func (enc *Encoding) GetData() *[]byte {
 	return &enc.Data
+}
+
+// PlayLength returns how long this encoding will play its data for
+func (enc *Encoding) PlayLength() time.Duration {
+	return time.Duration(
+		1000*float64(len(enc.Data))/
+			float64(enc.SampleRate)/
+			float64(enc.Channels)/
+			float64(enc.Bits/8)) * time.Millisecond
 }
 
 // copy for an encoding just copies the encoding data,

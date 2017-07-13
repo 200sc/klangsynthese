@@ -1,24 +1,22 @@
 package sequence
 
-import "github.com/200sc/klangsynthese/synth"
-
-type VolumePattern []synth.Volume
+type VolumePattern []float64
 
 type HasVolumes interface {
-	GetVolumePattern() []synth.Volume
-	SetVolumePattern([]synth.Volume)
+	GetVolumePattern() []float64
+	SetVolumePattern([]float64)
 }
 
-func (vp *VolumePattern) GetVolumePattern() []synth.Volume {
+func (vp *VolumePattern) GetVolumePattern() []float64 {
 	return *vp
 }
 
-func (vp *VolumePattern) SetVolumePattern(vs []synth.Volume) {
+func (vp *VolumePattern) SetVolumePattern(vs []float64) {
 	*vp = vs
 }
 
 // Volumes sets the generator's Volume pattern
-func Volumes(vs ...synth.Volume) Option {
+func Volumes(vs ...float64) Option {
 	return func(g Generator) {
 		if hvs, ok := g.(HasVolumes); ok {
 			hvs.SetVolumePattern(vs)
@@ -30,7 +28,7 @@ func Volumes(vs ...synth.Volume) Option {
 // to be Volume p. This could involve duplicating a pattern
 // until it is long enough to reach n. Meaningless if the
 // Volume pattern has not been set yet.
-func VolumeAt(v synth.Volume, n int) Option {
+func VolumeAt(v float64, n int) Option {
 	return func(g Generator) {
 		if hvs, ok := g.(HasVolumes); ok {
 			if hl, ok := hvs.(HasLength); ok {
@@ -60,7 +58,7 @@ func VolumeAt(v synth.Volume, n int) Option {
 // VolumePatternAt sets the n'th value in the Volume pattern
 // to be Volume p. Meaningless if the Volume pattern has not
 // been set yet.
-func VolumePatternAt(v synth.Volume, n int) Option {
+func VolumePatternAt(v float64, n int) Option {
 	return func(g Generator) {
 		if hvs, ok := g.(HasVolumes); ok {
 			volumes := hvs.GetVolumePattern()
