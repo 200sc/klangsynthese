@@ -242,17 +242,11 @@ func AssertStereo() Encoding {
 		d := *data
 		newData := make([]byte, len(d)*2)
 		byteDepth := int(*enc.GetBitDepth() / 8)
-		switch byteDepth {
-		case 2:
-			for i := 0; i < len(d); i += 2 {
-				for j := 0; j < byteDepth; j++ {
-					newData[i*2+j] = d[i+j]
-					newData[i*2+j+byteDepth] = d[i+j]
-				}
+		for i := 0; i < len(d); i += 2 {
+			for j := 0; j < byteDepth; j++ {
+				newData[i*2+j] = d[i+j]
+				newData[i*2+j+byteDepth] = d[i+j]
 			}
-		default:
-			// log unsupported bit depth
-			// 2 4 and 8 should also be supported, as int8 int32 and int64
 		}
 		*data = newData
 	}
