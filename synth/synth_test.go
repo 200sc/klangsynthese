@@ -13,35 +13,35 @@ func TestSinWav(t *testing.T) {
 	a, err := Int16.Sin()
 	assert.Nil(t, err)
 	a.Play()
-	time.Sleep(Int16.Duration())
+	time.Sleep(Int16.PlayLength())
 }
 
 func TestSquareWav(t *testing.T) {
 	a, err := Int16.Square()
 	assert.Nil(t, err)
 	a.Play()
-	time.Sleep(Int16.Duration())
+	time.Sleep(Int16.PlayLength())
 }
 
 func TestSawWav(t *testing.T) {
 	a, err := Int16.Saw()
 	assert.Nil(t, err)
 	a.Play()
-	time.Sleep(Int16.Duration())
+	time.Sleep(Int16.PlayLength())
 }
 
 func TestTriangleWav(t *testing.T) {
 	a, err := Int16.Triangle()
 	assert.Nil(t, err)
 	a.Play()
-	time.Sleep(Int16.Duration())
+	time.Sleep(Int16.PlayLength())
 }
 
 func TestPulseWav(t *testing.T) {
 	a, err := Int16.Pulse(8)()
 	assert.Nil(t, err)
 	a.Play()
-	time.Sleep(Int16.Duration())
+	time.Sleep(Int16.PlayLength())
 }
 
 func TestVolume(t *testing.T) {

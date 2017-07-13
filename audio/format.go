@@ -23,6 +23,7 @@ func (f *Format) GetBitDepth() *uint16 {
 	return &f.Bits
 }
 
+// Wave takes in raw bytes and encodes them according to this format
 func (f *Format) Wave(b []byte) (Audio, error) {
 	return EncodeBytes(Encoding{b, *f, CanLoop{}})
 }

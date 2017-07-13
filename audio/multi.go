@@ -88,6 +88,7 @@ func (m *Multi) MustCopy() Audio {
 	return m2
 }
 
+// PlayLength returns how long this audio will play for
 func (m *Multi) PlayLength() time.Duration {
 	var d time.Duration
 	for _, a := range m.Audios {

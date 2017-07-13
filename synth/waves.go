@@ -7,6 +7,7 @@ import (
 	"github.com/200sc/klangsynthese/audio"
 )
 
+// Wave functions take a set of options and return an audio
 type Wave func(opts ...Option) (audio.Audio, error)
 
 // Thanks to https://en.wikibooks.org/wiki/Sound_Synthesis_Theory/Oscillators_and_Wavetables
