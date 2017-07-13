@@ -14,7 +14,7 @@ func TestBasicWav(t *testing.T) {
 	f, err := os.Open("test.wav")
 	fmt.Println(f)
 	assert.Nil(t, err)
-	a, err := NewController().Load(f)
+	a, err := Load(f)
 	assert.Nil(t, err)
 	err = <-a.Play()
 	assert.Nil(t, err)

@@ -20,7 +20,7 @@ func TestReadCeol(t *testing.T) {
 		sequence.Chords(c.ChordPattern()),
 		sequence.Volumes(2000),
 		sequence.Ticks(DurationFromQuarters(c.Bpm, 1)),
-		sequence.Waves(synth.Saw),
+		sequence.Waves(synth.Int16.Saw),
 	)
 	sq := wg.Generate()
 	sq.Play()

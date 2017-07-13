@@ -1,7 +1,11 @@
 // Package audio provides audio playing and encoding support
 package audio
 
-import "github.com/200sc/klangsynthese/audio/filter/supports"
+import (
+	"time"
+
+	"github.com/200sc/klangsynthese/audio/filter/supports"
+)
 
 // Audio represents playable, filterable audio data.
 type Audio interface {
@@ -18,6 +22,7 @@ type Audio interface {
 	// Implementing struct-- encoding
 	Copy() (Audio, error)
 	MustCopy() Audio
+	PlayLength() time.Duration
 }
 
 // FullAudio supports all the built in filters

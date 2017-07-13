@@ -22,3 +22,7 @@ func (f *Format) GetChannels() *uint16 {
 func (f *Format) GetBitDepth() *uint16 {
 	return &f.Bits
 }
+
+func (f *Format) Wave(b []byte) (Audio, error) {
+	return EncodeBytes(Encoding{b, *f, CanLoop{}})
+}

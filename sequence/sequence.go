@@ -118,6 +118,10 @@ func (s *Sequence) Copy() (audio.Audio, error) {
 	return s2, nil
 }
 
+func (s *Sequence) PlayLength() time.Duration {
+	return time.Duration(len(s.Pattern)) * s.tickDuration
+}
+
 func (s *Sequence) MustCopy() audio.Audio {
 	a, err := s.Copy()
 	if err != nil {
