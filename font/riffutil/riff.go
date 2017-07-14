@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"strconv"
 
 	"golang.org/x/image/riff"
 )
@@ -22,7 +23,7 @@ func deepRead(r *riff.Reader, prefix string) {
 	for err == nil {
 		typ, l, data, err = r.Next()
 		if err == nil {
-			fmt.Print(prefix, Header(typ), "Length:", l)
+			fmt.Print(prefix, Header(typ), " Length:", l)
 			//fmt.Println(prefix, data)
 			if typ == riff.LIST {
 				typ2, r2, err2 := riff.NewListReader(l, data)
@@ -280,6 +281,17 @@ func (ds *decodeState) structChunks(rv reflect.Value, inLength int) error {
 
 func (ds *decodeState) fieldValue(rv reflect.Value, ln uint32) (reflect.Value, error) {
 	switch rv.Kind() {
+	case reflect.Struct:
+		st := rv.Addr().Interface()
+		err := binary.Read(ds.reader, binary.LittleEndian, st)
+		return reflect.Indirect(reflect.ValueOf(st)), err
+	case reflect.String:
+		data := make([]byte, ln)
+		n, err := ds.reader.Read(data)
+		if n != int(ln) {
+			return reflect.Value{}, errors.New("Insufficient data found in RIFF data block")
+		}
+		return reflect.ValueOf(string(data)), err
 	case reflect.Slice:
 		switch rv.Type().Elem().Kind() {
 		case reflect.Uint8:
@@ -292,6 +304,41 @@ func (ds *decodeState) fieldValue(rv reflect.Value, ln uint32) (reflect.Value, e
 		default:
 			return reflect.Value{}, errors.New("Unsupported type in input struct")
 		}
+	case reflect.Uint32:
+		if ln != 4 {
+			return reflect.Value{}, errors.New("Invalid length for uint32: " + strconv.Itoa(int(ln)))
+		}
+		data := make([]byte, ln)
+		n, err := ds.reader.Read(data)
+		if n != int(ln) {
+			return reflect.Value{}, errors.New("Insufficient data found in RIFF data block")
+		}
+		if err != nil {
+			return reflect.Value{}, err
+		}
+		val, n := binary.Uvarint(data)
+		if n <= 0 {
+			return reflect.Value{}, errors.New("Unable to decode int64 from data")
+		}
+		val32 := uint32(val)
+		return reflect.ValueOf(val32), nil
+	case reflect.Int64:
+		if ln != 8 {
+			return reflect.Value{}, errors.New("Invalid length for int64: " + strconv.Itoa(int(ln)))
+		}
+		data := make([]byte, ln)
+		n, err := ds.reader.Read(data)
+		if n != int(ln) {
+			return reflect.Value{}, errors.New("Insufficient data found in RIFF data block")
+		}
+		if err != nil {
+			return reflect.Value{}, err
+		}
+		val, n := binary.Varint(data)
+		if n <= 0 {
+			return reflect.Value{}, errors.New("Unable to decode int64 from data")
+		}
+		return reflect.ValueOf(val), nil
 	}
 	return reflect.Value{}, nil
 }

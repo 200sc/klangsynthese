@@ -35,10 +35,10 @@ func (enc *Encoding) GetData() *[]byte {
 // PlayLength returns how long this encoding will play its data for
 func (enc *Encoding) PlayLength() time.Duration {
 	return time.Duration(
-		1000*float64(len(enc.Data))/
+		100000000*float64(len(enc.Data))/
 			float64(enc.SampleRate)/
 			float64(enc.Channels)/
-			float64(enc.Bits/8)) * time.Millisecond
+			float64(enc.Bits/8)) * time.Nanosecond
 }
 
 // copy for an encoding just copies the encoding data,
