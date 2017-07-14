@@ -2,6 +2,7 @@
 package synth
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/200sc/klangsynthese/audio"
@@ -16,6 +17,7 @@ func phase(freq Pitch, i int, sampleRate uint32) float64 {
 }
 
 func bytesFromInts(is []int16, channels int) []byte {
+	fmt.Println(is[:40])
 	wave := make([]byte, len(is)*channels*2)
 	for i := 0; i < len(wave); i += channels * 2 {
 		wave[i] = byte(is[i/4] % 256)
@@ -26,7 +28,7 @@ func bytesFromInts(is []int16, channels int) []byte {
 			wave[i+(2*c)+1] = wave[i+1]
 		}
 	}
-	wave = append(wave, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	wave = append(wave, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 	return wave
 }
 

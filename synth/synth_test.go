@@ -98,3 +98,12 @@ func TestSpeed(t *testing.T) {
 	a2.Play()
 	time.Sleep(2 * time.Second)
 }
+
+func TestPrintPitch(t *testing.T) {
+	for i := int(C0); i < int(B8); i = int(Pitch(i).Up(HalfStep)) {
+		fmt.Println(i)
+		a, _ := Int16.Sin(Duration(500*time.Millisecond), AtPitch(Pitch(i)))
+		a.Play()
+		time.Sleep(a.PlayLength())
+	}
+}
