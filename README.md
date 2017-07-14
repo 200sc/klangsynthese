@@ -29,5 +29,6 @@ Binaries built with this will probably need alsa-base as well to run on Linux.
 - [x] Filtering audio samples
 - [x] Creating Sequences of audio samples to play music
 - [x] Importable Bosca Ceoil files (.ceol)
+- [x] Importable DLS files 
 - [ ] Importable arbitrary instruments
-- [ ] Other Importable soundfonts (.sf2, .dls ...)
+- [ ] Other Importable soundfonts (.sf2...)
