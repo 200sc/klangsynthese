@@ -99,7 +99,6 @@ func (ds *decodeState) nextID() (string, error) {
 	if l != 4 || err != nil {
 		return "", errors.New("RIFF missing expected ID")
 	}
-	fmt.Println("NextId", string(id))
 	return string(id), nil
 }
 
@@ -127,7 +126,6 @@ func (ds *decodeState) nextLen() (uint32, error) {
 func (ds *decodeState) chunks(rv reflect.Value, inLength int) (reflect.Value, error) {
 	// Find chunkId in rv
 	// If it can't be found, ignore it as a value the user does not want
-	fmt.Println("Chunks canAddr:", rv.CanAddr())
 	switch rv.Kind() {
 	case reflect.Struct:
 		return rv, ds.structChunks(rv, inLength)
@@ -145,7 +143,6 @@ func (ds *decodeState) sliceChunks(rv reflect.Value, inLength int) (reflect.Valu
 	newSlice := reflect.MakeSlice(slTy, 0, 10000)
 	for inLength > 0 {
 		_, ln, isList, err := ds.nextIdLen()
-		fmt.Println("Slice inLength", inLength, isList)
 		if err != nil {
 			return reflect.Value{}, err
 		}
@@ -200,13 +197,11 @@ func (ds *decodeState) structChunks(rv reflect.Value, inLength int) error {
 	for i := range fields {
 		fields[i] = rv.Field(i)
 		fieldTags[i] = ty.Field(i).Tag
-		fmt.Println("Field", i, "canAddr", fields[i].CanAddr(), fieldTags[i])
 	}
 	i := 0
 	for inLength > 0 {
 		tag := fieldTags[i].Get("riff")
 		//spew.Dump(fields[i])
-		fmt.Println("Tag, chunkID, inLength", tag, chunkId, inLength)
 		if tag == chunkId {
 			// get contents from recursive call
 			var content reflect.Value
@@ -226,7 +221,6 @@ func (ds *decodeState) structChunks(rv reflect.Value, inLength int) error {
 				ds.reader.ReadByte()
 				inLength--
 			}
-			fmt.Println("InLength:", inLength)
 			if inLength <= 0 {
 				return nil
 			}
@@ -285,7 +279,6 @@ func (ds *decodeState) structChunks(rv reflect.Value, inLength int) error {
 }
 
 func (ds *decodeState) fieldValue(rv reflect.Value, ln uint32) (reflect.Value, error) {
-	fmt.Println("fieldValue", ln)
 	switch rv.Kind() {
 	case reflect.Slice:
 		switch rv.Type().Elem().Kind() {

@@ -5,9 +5,10 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
+	"github.com/200sc/klangsynthese/audio"
 	"github.com/200sc/klangsynthese/font/riffutil"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/image/riff"
 )
@@ -28,7 +29,13 @@ func TestDLSUnmarshall(t *testing.T) {
 	assert.Nil(t, err)
 	err = riffutil.Unmarshal(by, dls)
 	assert.Nil(t, err)
-	spew.Dump(dls)
+	afmt := audio.Format{44100, 1, 16}
+	for i := range dls.Wvpl {
+		a, err := afmt.Wave(dls.Wvpl[i].Data)
+		assert.Nil(t, err)
+		a.Play()
+		time.Sleep(a.PlayLength())
+	}
 }
 
 type DLS struct {

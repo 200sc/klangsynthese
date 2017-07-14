@@ -8,14 +8,7 @@ import (
 	"github.com/200sc/klangsynthese/audio"
 )
 
-// This is notes / pseudo-code / not useable yet
-
-// A Sequence does not care if it loops because that is audio/Encoding's job
-// A Sequence does not care how long it should play each sample it is given
-// because that is the job of the individual samples
-// A Sequence does care how much time it should wait between samples
-// A Sequence does care if that time is variable (swing rhythm)
-// A Sequence satisfies Audio
+// A Sequence is a timed pattern of simultaneously played audios.
 type Sequence struct {
 	// Sequences play patterns of audio
 	// everything at Pattern[0] will be simultaneously Play()ed at
