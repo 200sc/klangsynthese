@@ -6,18 +6,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/200sc/klangsynthese/font/riffutil"
+	"github.com/200sc/klangsynthese/font/riff"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/image/riff"
 )
-
-func TestDLS(t *testing.T) {
-	fl, err := os.Open("nolicenseforthis.dls")
-	assert.Nil(t, err)
-	typ, reader, err := riff.NewReader(fl)
-	fmt.Println(riffutil.Header(typ))
-	riffutil.DeepRead(reader)
-}
 
 func TestDLSUnmarshal(t *testing.T) {
 	fl, err := os.Open("nolicenseforthis.dls")
@@ -25,7 +16,7 @@ func TestDLSUnmarshal(t *testing.T) {
 	dls := &DLS{}
 	by, err := ioutil.ReadAll(fl)
 	assert.Nil(t, err)
-	err = riffutil.Unmarshal(by, dls)
+	err = riff.Unmarshal(by, dls)
 	assert.Nil(t, err)
 	//afmt := audio.Format{44100, 1, 16}
 	fmt.Println(len(dls.Lins))
@@ -36,7 +27,7 @@ func TestDLSUnmarshal(t *testing.T) {
 			fmt.Println(rgn)
 		}
 	}
-	fmt.Println(dls.Info)
+	fmt.Println(dls.INFO)
 	//for _, w := range dls.Wvpl {
 	//fmt.Println(w.Fmt)
 	//a, err := afmt.Wave(w.Data)
