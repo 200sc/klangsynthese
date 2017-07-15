@@ -10,6 +10,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestDLSPrint(t *testing.T) {
+	fl, err := os.Open("nolicenseforthis.dls")
+	assert.Nil(t, err)
+	data, err := ioutil.ReadAll(fl)
+	assert.Nil(t, err)
+	// Todo: There should be a way to not have to readAll this
+	r := riff.NewReader(data)
+	r.Print()
+	//fmt.Println(s)
+}
+
 func TestDLSUnmarshal(t *testing.T) {
 	fl, err := os.Open("nolicenseforthis.dls")
 	assert.Nil(t, err)

@@ -34,3 +34,19 @@ func AtPitch(p Pitch) Option {
 		return s
 	}
 }
+
+// Mono sets the format to play mono audio.
+func Mono() Option {
+	return func(s Source) Source {
+		s.Channels = 1
+		return s
+	}
+}
+
+// Stereo sets the format to play stereo audio.
+func Stereo() Option {
+	return func(s Source) Source {
+		s.Channels = 2
+		return s
+	}
+}
