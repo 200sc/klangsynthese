@@ -1,3 +1,4 @@
+// Package dls contains data structures for DLS (.dls) file types
 package dls
 
 import "github.com/200sc/klangsynthese/font/riff"

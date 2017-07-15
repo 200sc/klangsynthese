@@ -1,3 +1,4 @@
+// Package riff reads and umarshalls RIFF files
 package riff
 
 import (
@@ -23,6 +24,9 @@ func NewReader(data []byte) *Reader {
 	}
 }
 
+// Print prints a reader without any knowledge of the structure of the reader,
+// so all values will be []bytes.
+// It assumes the reader has not advanced at all. Todo: Change that
 func (r *Reader) Print() {
 	deepPrint(r, " ", -1)
 }
