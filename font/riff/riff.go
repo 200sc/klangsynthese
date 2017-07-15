@@ -1,4 +1,4 @@
-package riffutil
+package riff
 
 import (
 	"bytes"
@@ -166,6 +166,9 @@ func (ds *decodeState) sliceChunks(rv reflect.Value, inLength int) (reflect.Valu
 		}
 		newStruct := reflect.New(ty)
 		err = ds.structChunks(reflect.Indirect(newStruct), int(ln))
+		if err != nil {
+			return reflect.Value{}, err
+		}
 		newSlice = reflect.Append(newSlice, reflect.Indirect(newStruct))
 		if ln%2 != 0 {
 			ds.reader.ReadByte()
@@ -177,7 +180,7 @@ func (ds *decodeState) sliceChunks(rv reflect.Value, inLength int) (reflect.Valu
 }
 
 // structChunks reads chunks and matches them to fields on rv (which is a struct)
-// structChunks sets the fields of rv to be the ouput it gets
+// structChunks sets the fields of rv to be the output it gets
 func (ds *decodeState) structChunks(rv reflect.Value, inLength int) error {
 	chunkId, ln, isList, err := ds.nextIdLen()
 	if err != nil {
