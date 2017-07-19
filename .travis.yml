@@ -2,3 +2,6 @@ language: go
 
 go:
   - 1.x
+
+before_install:
+  - sudo apt-get install alsa-base libasound2-dev
