@@ -1,42 +1,28 @@
 package sf2
 
 import (
-	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
 
-	"github.com/200sc/klangsynthese/font/riffutil"
+	"github.com/200sc/klangsynthese/font/riff"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/image/riff"
 )
 
 func TestReadSf2(t *testing.T) {
 	fl, err := os.Open("nolicenseforthis.sf2")
 	assert.Nil(t, err)
-	typ, reader, err := riff.NewReader(fl)
-	fmt.Println(riffutil.Header(typ))
-	riffutil.DeepRead(reader)
+	data, err := ioutil.ReadAll(fl)
+	assert.Nil(t, err)
+	// Todo: There should be a way to not have to readAll this
+	r := riff.NewReader(data)
+	r.Print()
 }
 
 type Data struct {
-	INFO
+	riff.INFO
 	Sdta
 	Pdta
-}
-
-type INFO struct {
-	Ifil VersionTag
-	Isng string
-	INAM string
-	// Optional values follow
-	Irom string
-	Iver VersionTag
-	ICRD string
-	IENG string
-	IPRD string
-	ICOP string
-	ICMP string
-	ISFT string
 }
 
 type VersionTag struct {
