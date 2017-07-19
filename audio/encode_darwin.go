@@ -47,5 +47,5 @@ func (dna *darwinNopAudio) MustFilter(fs ...Filter) Audio {
 }
 
 func EncodeBytes(enc Encoding) (Audio, error) {
-	return darwinNopAudio{enc}, nil
+	return &darwinNopAudio{enc}, nil
 }
