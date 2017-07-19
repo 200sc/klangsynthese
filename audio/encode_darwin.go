@@ -42,7 +42,7 @@ func (dna *darwinNopAudio) Filter(fs ...Filter) (Audio, error) {
 }
 
 func (dna *darwinNopAudio) MustFilter(fs ...Filter) Audio {
-	a, _ := dna.Filter(fs)
+	a, _ := dna.Filter(fs...)
 	return a
 }
 
