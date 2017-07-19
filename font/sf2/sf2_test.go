@@ -20,7 +20,7 @@ func TestReadSf2(t *testing.T) {
 }
 
 type Data struct {
-	INFO
+	riff.INFO
 	Sdta
 	Pdta
 }
