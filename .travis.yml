@@ -11,4 +11,5 @@ os:
  - osx
 
 script:
- - 
+ - cd audio
+ - go test .
