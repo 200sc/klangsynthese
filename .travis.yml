@@ -10,6 +10,4 @@ branches:
 os:
  - osx
 
-script:
- - cd audio
- - go test .
+script: go test ./audio
