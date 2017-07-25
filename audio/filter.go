@@ -19,6 +19,6 @@ type CanLoop struct {
 }
 
 // GetLoop allows CanLoop to satisfy the SupportsLoop interface
-func (cl CanLoop) GetLoop() *bool {
+func (cl *CanLoop) GetLoop() *bool {
 	return &cl.Loop
 }

@@ -90,6 +90,13 @@ func TestStop(t *testing.T) {
 	// assert that sound was not heard or was only heard very briefly
 }
 
+func TestLoop(t *testing.T) {
+	a, _ := Int16.Sin()
+	a, _ = a.Filter(filter.LoopOn())
+	<-a.Play()
+	time.Sleep(3 * time.Second)
+}
+
 func TestSpeed(t *testing.T) {
 	a, _ := Int16.Sin()
 	a2, _ := a.MustCopy().Filter(filter.Speed(.5))
