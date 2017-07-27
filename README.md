@@ -8,6 +8,10 @@ Klangsynthese right now supports a number of features that will work regardless 
 and a number of features specific to Windows where the hope is to move support to Linux
 and Darwin.
 
+## Usage
+
+See test files.
+
 ## OS specific features
 
 | OS       | Load | Modify | Save   | Play |
