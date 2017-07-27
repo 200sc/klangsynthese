@@ -57,7 +57,6 @@ func mod(init, inc int, modFn func(float64) float64) Encoding {
 			}
 		default:
 			// log unsupported byte depth
-			// 1 4 and 8 should also be supported, as int8 int32 and int64
 		}
 		*data = d
 	}

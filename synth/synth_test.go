@@ -114,3 +114,12 @@ func TestPrintPitch(t *testing.T) {
 		time.Sleep(a.PlayLength())
 	}
 }
+
+func TestPitchShift(t *testing.T) {
+	a, _ := Int16.Sin()
+	a.Play()
+	time.Sleep(a.PlayLength())
+	a = a.MustCopy().MustFilter(filter.PitchShift(0.5))
+	a.Play()
+	time.Sleep(a.PlayLength())
+}
