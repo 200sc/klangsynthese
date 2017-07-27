@@ -18,15 +18,3 @@ func (un Unsupported) Error() string {
 	}
 	return s
 }
-
-// Cons combines two unsupported errors into one
-func (un Unsupported) Cons(err error) ConsError {
-	// At time of writing, Unsupported is the only ConsError
-	// Todo: probably use some established library that has done
-	// this sort of work combining errors already
-	switch err2 := err.(type) {
-	case Unsupported:
-		return Unsupported{append(un.filters, err2.filters...)}
-	}
-	return un
-}

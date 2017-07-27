@@ -2,11 +2,7 @@
 
 package audio
 
-import (
-	"errors"
-
-	"github.com/200sc/klangsynthese/audio/filter/supports"
-)
+import "errors"
 
 type darwinNopAudio struct {
 	Encoding
@@ -27,18 +23,11 @@ func (dna *darwinNopAudio) Stop() error {
 func (dna *darwinNopAudio) Filter(fs ...Filter) (Audio, error) {
 	var a Audio = dna
 	var err error
-	var consError supports.ConsError
 	for _, f := range fs {
 		a, err = f.Apply(a)
-		if err != nil {
-			if consError == nil {
-				consError = err.(supports.ConsError)
-			} else {
-				consError = consError.Cons(err)
-			}
-		}
+		err = errors.Wrap(err, "Failed to apply filter")
 	}
-	return dna, consError
+	return dna, err
 }
 
 func (dna *darwinNopAudio) MustFilter(fs ...Filter) Audio {
