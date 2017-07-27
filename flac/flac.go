@@ -2,9 +2,9 @@
 package flac
 
 import (
-	"errors"
-	"fmt"
 	"io"
+
+	"github.com/pkg/errors"
 
 	"github.com/200sc/klangsynthese/audio"
 	"github.com/eaburns/flac"
@@ -17,34 +17,11 @@ var format = audio.Format{
 	Channels:   2,
 }
 
-// A Controller might eventually contain device information concerning
-// what audios made from this should play out of but also might not
-// exist in the future
-type Controller struct{}
-
-// NewController returns a default controller
-func NewController() *Controller {
-	return &Controller{}
-}
-
-// Wave encodes raw bytes with the default wavformatting into audio
-// todo: this really shouldn't be here. Having some controller type that
-// knows its format makes sense, but the output data has nothing to do with
-// wav files.
-func (mc *Controller) Wave(b []byte) (audio.Audio, error) {
-	return audio.EncodeBytes(
-		audio.Encoding{
-			Data:   b,
-			Format: mc.Format(),
-		})
-}
-
 // Load loads wav data from the incoming reader as an audio
-func (mc *Controller) Load(r io.Reader) (audio.Audio, error) {
+func Load(r io.Reader) (audio.Audio, error) {
 	data, meta, err := flac.Decode(r)
 	if err != nil {
-		fmt.Println("Load error", err)
-		return nil, err
+		return nil, errors.Wrap(err, "Failed to load flac")
 	}
 
 	fformat := audio.Format{
@@ -60,11 +37,11 @@ func (mc *Controller) Load(r io.Reader) (audio.Audio, error) {
 }
 
 // Save will eventually save an audio encoded as a wav to the given writer
-func (mc *Controller) Save(r io.ReadWriter, a audio.Audio) error {
+func Save(r io.ReadWriter, a audio.Audio) error {
 	return errors.New("Unsupported Functionality")
 }
 
 // Format returns the default wav formatting
-func (mc *Controller) Format() audio.Format {
+func Format() audio.Format {
 	return format
 }
