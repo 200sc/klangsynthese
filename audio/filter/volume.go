@@ -57,7 +57,6 @@ func VolumeBalance(lMult, rMult float64) Encoding {
 			}
 		default:
 			// log unsupported bit depth
-			// 2 4 and 8 should also be supported, as int8 int32 and int64
 		}
 		*data = d
 	}
