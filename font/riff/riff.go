@@ -1,4 +1,5 @@
-package riffutil
+// Package riff reads and umarshalls RIFF files
+package riff
 
 import (
 	"bytes"
@@ -8,142 +9,154 @@ import (
 	"io"
 	"reflect"
 	"strconv"
-
-	"golang.org/x/image/riff"
 )
 
-func DeepRead(r *riff.Reader) {
-	deepRead(r, " ")
+// A Reader is a bytes reader with some helper functions to read IDs, Lens, and Data
+// from RIFF files.
+type Reader struct {
+	*bytes.Reader
 }
-func deepRead(r *riff.Reader, prefix string) {
+
+// NewReader returns an initial Reader
+func NewReader(data []byte) *Reader {
+	return &Reader{
+		Reader: bytes.NewReader(data),
+	}
+}
+
+// Print prints a reader without any knowledge of the structure of the reader,
+// so all values will be []bytes.
+// It assumes the reader has not advanced at all. Todo: Change that
+func (r *Reader) Print() {
+	deepPrint(r, " ", -1)
+}
+
+func deepPrint(r *Reader, prefix string, readLimit int) {
 	var err error
-	var typ riff.FourCC
+	var typ string
 	var l uint32
-	var data io.Reader
-	for err == nil {
-		typ, l, data, err = r.Next()
+	var data []byte
+	var isList bool
+	var read int
+	for err == nil && readLimit == -1 || read < readLimit {
+		typ, l, isList, err = r.NextIDLen()
+		// There will be a bogus byte at the end of some prints.
+		if l%2 != 0 {
+			l++
+		}
+		read += 8
 		if err == nil {
-			fmt.Print(prefix, Header(typ), " Length:", l)
-			//fmt.Println(prefix, data)
-			if typ == riff.LIST {
-				typ2, r2, err2 := riff.NewListReader(l, data)
+			fmt.Print(prefix, typ, " Length:", l)
+			if isList {
+				typ2, err2 := r.NextID()
+				read += 4
 				if err2 == nil {
-					fmt.Println(prefix+"  ", Header(typ2))
-					deepRead(r2, prefix+"    ")
+					fmt.Println(prefix+"  ", typ2)
+					deepPrint(r, prefix+"    ", int(l)-4)
 				} else {
 					fmt.Println(prefix, err2)
 				}
 			} else if l < 40 {
-				b := make([]byte, l)
-				n, err := data.Read(b)
-				if err != nil || n != int(l) {
-					fmt.Println("Error: ", err)
-				} else {
-					fmt.Println(" Content:", string(b))
-				}
+				data = make([]byte, l)
+				r.Read(data)
+				fmt.Println(" Content:", data)
 			} else {
+				r.Seek(int64(l), io.SeekCurrent)
 				fmt.Println(" Long Content")
 			}
+			read += int(l)
 		}
 	}
-	if err != io.EOF {
+	if err != nil && err != io.EOF {
 		fmt.Println(prefix, err)
 	}
 }
 
-type Header riff.FourCC
-
-func (rh Header) String() string {
-	return string(rh[0]) + string(rh[1]) + string(rh[2]) + string(rh[3])
-}
-
+// Unmarshal is a mirror of json.Unmarshal, for RIFF files
 func Unmarshal(data []byte, v interface{}) error {
-	var d decodeState
-	d.reader = bytes.NewReader(data)
-	return d.unmarshal(v)
+	return NewReader(data).unmarshal(v)
 }
 
-type decodeState struct {
-	reader *bytes.Reader
-}
-
-func (ds *decodeState) unmarshal(v interface{}) error {
+func (r *Reader) unmarshal(v interface{}) error {
 	// Mirrors json.unmarshal
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return errors.New("Invalid Unmarshal Struct")
 	}
 	// The first ID in the riff should be RIFF
-	id, err := ds.nextID()
+	id, err := r.NextID()
 	if err != nil {
 		return err
 	}
 	if id != "RIFF" {
 		return errors.New("RIFF format must begin with RIFF")
 	}
-	ln, err := ds.nextLen()
+	ln, err := r.NextLen()
 	if err != nil {
 		return err
 	}
 	// The next ID identifies this file type. We don't want it.
-	_, err = ds.nextID()
+	_, err = r.NextID()
 	if err != nil {
 		return err
 	}
-	_, err = ds.chunks(reflect.Indirect(rv), int(ln))
+	_, err = r.chunks(reflect.Indirect(rv), int(ln))
 	return err
 }
 
-func (ds *decodeState) nextID() (string, error) {
+// NextID returns the next four byte sof the reader as a string
+func (r *Reader) NextID() (string, error) {
 	id := make([]byte, 4)
-	l, err := ds.reader.Read(id)
+	l, err := r.Reader.Read(id)
 	if l != 4 || err != nil {
 		return "", errors.New("RIFF missing expected ID")
 	}
 	return string(id), nil
 }
 
-func (ds *decodeState) nextIdLen() (string, uint32, bool, error) {
-	id, err := ds.nextID()
+// NextIDLen returns NextID and NextLen
+func (r *Reader) NextIDLen() (string, uint32, bool, error) {
+	id, err := r.NextID()
 	if err != nil {
 		return "", 0, false, err
 	}
-	ln, err := ds.nextLen()
+	ln, err := r.NextLen()
 	if err != nil {
 		return "", 0, false, err
 	}
-	return id, ln, id == "LIST", nil
+	return id, ln, id == "LIST" || id == "RIFF", nil
 }
 
-func (ds *decodeState) nextLen() (uint32, error) {
+// NextLen returns the next four bytes of the reader as a length.
+func (r *Reader) NextLen() (uint32, error) {
 	var ln uint32
-	err := binary.Read(ds.reader, binary.LittleEndian, &ln)
+	err := binary.Read(r.Reader, binary.LittleEndian, &ln)
 	if err != nil {
 		return ln, errors.New("RIFF missing expected length")
 	}
 	return ln, nil
 }
 
-func (ds *decodeState) chunks(rv reflect.Value, inLength int) (reflect.Value, error) {
+func (r *Reader) chunks(rv reflect.Value, inLength int) (reflect.Value, error) {
 	// Find chunkId in rv
 	// If it can't be found, ignore it as a value the user does not want
 	switch rv.Kind() {
 	case reflect.Struct:
-		return rv, ds.structChunks(rv, inLength)
+		return rv, r.structChunks(rv, inLength)
 	case reflect.Slice:
-		return ds.sliceChunks(rv, inLength)
+		return r.sliceChunks(rv, inLength)
 	default:
 		return reflect.Value{}, errors.New("Unsupported unmarshal type")
 	}
 }
 
-func (ds *decodeState) sliceChunks(rv reflect.Value, inLength int) (reflect.Value, error) {
+func (r *Reader) sliceChunks(rv reflect.Value, inLength int) (reflect.Value, error) {
 
 	slTy := rv.Type()
 	ty := slTy.Elem()
 	newSlice := reflect.MakeSlice(slTy, 0, 10000)
 	for inLength > 0 {
-		_, ln, isList, err := ds.nextIdLen()
+		_, ln, isList, err := r.NextIDLen()
 		if err != nil {
 			return reflect.Value{}, err
 		}
@@ -155,7 +168,7 @@ func (ds *decodeState) sliceChunks(rv reflect.Value, inLength int) (reflect.Valu
 		if inLength <= 0 {
 			break
 		}
-		_, err = ds.nextID()
+		_, err = r.NextID()
 		if err != nil {
 			return reflect.Value{}, err
 		}
@@ -165,10 +178,13 @@ func (ds *decodeState) sliceChunks(rv reflect.Value, inLength int) (reflect.Valu
 			break
 		}
 		newStruct := reflect.New(ty)
-		err = ds.structChunks(reflect.Indirect(newStruct), int(ln))
+		err = r.structChunks(reflect.Indirect(newStruct), int(ln))
+		if err != nil {
+			return reflect.Value{}, err
+		}
 		newSlice = reflect.Append(newSlice, reflect.Indirect(newStruct))
 		if ln%2 != 0 {
-			ds.reader.ReadByte()
+			r.Reader.ReadByte()
 			inLength--
 		}
 		inLength -= int(ln)
@@ -177,16 +193,16 @@ func (ds *decodeState) sliceChunks(rv reflect.Value, inLength int) (reflect.Valu
 }
 
 // structChunks reads chunks and matches them to fields on rv (which is a struct)
-// structChunks sets the fields of rv to be the ouput it gets
-func (ds *decodeState) structChunks(rv reflect.Value, inLength int) error {
-	chunkId, ln, isList, err := ds.nextIdLen()
+// structChunks sets the fields of rv to be the output it gets
+func (r *Reader) structChunks(rv reflect.Value, inLength int) error {
+	chunkID, ln, isList, err := r.NextIDLen()
 	if err != nil {
 		return err
 	}
 	if isList {
 		ln -= 4
 		inLength -= 4
-		chunkId, err = ds.nextID()
+		chunkID, err = r.NextID()
 		if err != nil {
 			return err
 		}
@@ -203,13 +219,13 @@ func (ds *decodeState) structChunks(rv reflect.Value, inLength int) error {
 	for inLength > 0 {
 		tag := fieldTags[i].Get("riff")
 		//spew.Dump(fields[i])
-		if tag == chunkId {
+		if tag == chunkID {
 			// get contents from recursive call
 			var content reflect.Value
 			if isList {
-				content, err = ds.chunks(fields[i], int(ln))
+				content, err = r.chunks(fields[i], int(ln))
 			} else {
-				content, err = ds.fieldValue(fields[i], ln)
+				content, err = r.fieldValue(fields[i], ln)
 			}
 			if err != nil {
 				return err
@@ -219,21 +235,21 @@ func (ds *decodeState) structChunks(rv reflect.Value, inLength int) error {
 			fields[i].Set(content)
 			// if length is odd read one more
 			if ln%2 != 0 {
-				ds.reader.ReadByte()
+				r.Reader.ReadByte()
 				inLength--
 			}
 			if inLength <= 0 {
 				return nil
 			}
 			// next id
-			chunkId, ln, isList, err = ds.nextIdLen()
+			chunkID, ln, isList, err = r.NextIDLen()
 			if err != nil {
 				return err
 			}
 			if isList {
 				ln -= 4
 				inLength -= 4
-				chunkId, err = ds.nextID()
+				chunkID, err = r.NextID()
 				if err != nil {
 					return err
 				}
@@ -251,7 +267,7 @@ func (ds *decodeState) structChunks(rv reflect.Value, inLength int) error {
 			if ln%2 != 0 {
 				ln++
 			}
-			_, err = ds.reader.Seek(int64(ln), io.SeekCurrent)
+			_, err = r.Reader.Seek(int64(ln), io.SeekCurrent)
 			if err != nil {
 				return err
 			}
@@ -260,14 +276,14 @@ func (ds *decodeState) structChunks(rv reflect.Value, inLength int) error {
 				return nil
 			}
 			// next id
-			chunkId, ln, isList, err = ds.nextIdLen()
+			chunkID, ln, isList, err = r.NextIDLen()
 			if err != nil {
 				return err
 			}
 			if isList {
 				ln -= 4
 				inLength -= 4
-				chunkId, err = ds.nextID()
+				chunkID, err = r.NextID()
 				if err != nil {
 					return err
 				}
@@ -279,15 +295,17 @@ func (ds *decodeState) structChunks(rv reflect.Value, inLength int) error {
 	return nil
 }
 
-func (ds *decodeState) fieldValue(rv reflect.Value, ln uint32) (reflect.Value, error) {
+// Todo: the switch here should change to some separate functions, there's some
+// repetition here that is not necessary.
+func (r *Reader) fieldValue(rv reflect.Value, ln uint32) (reflect.Value, error) {
 	switch rv.Kind() {
 	case reflect.Struct:
 		st := rv.Addr().Interface()
-		err := binary.Read(ds.reader, binary.LittleEndian, st)
+		err := binary.Read(r.Reader, binary.LittleEndian, st)
 		return reflect.Indirect(reflect.ValueOf(st)), err
 	case reflect.String:
 		data := make([]byte, ln)
-		n, err := ds.reader.Read(data)
+		n, err := r.Reader.Read(data)
 		if n != int(ln) {
 			return reflect.Value{}, errors.New("Insufficient data found in RIFF data block")
 		}
@@ -296,7 +314,7 @@ func (ds *decodeState) fieldValue(rv reflect.Value, ln uint32) (reflect.Value, e
 		switch rv.Type().Elem().Kind() {
 		case reflect.Uint8:
 			data := make([]byte, ln)
-			n, err := ds.reader.Read(data)
+			n, err := r.Reader.Read(data)
 			if n != int(ln) {
 				return reflect.Value{}, errors.New("Insufficient data found in RIFF data block")
 			}
@@ -309,7 +327,7 @@ func (ds *decodeState) fieldValue(rv reflect.Value, ln uint32) (reflect.Value, e
 			return reflect.Value{}, errors.New("Invalid length for uint32: " + strconv.Itoa(int(ln)))
 		}
 		data := make([]byte, ln)
-		n, err := ds.reader.Read(data)
+		n, err := r.Reader.Read(data)
 		if n != int(ln) {
 			return reflect.Value{}, errors.New("Insufficient data found in RIFF data block")
 		}
@@ -327,7 +345,7 @@ func (ds *decodeState) fieldValue(rv reflect.Value, ln uint32) (reflect.Value, e
 			return reflect.Value{}, errors.New("Invalid length for int64: " + strconv.Itoa(int(ln)))
 		}
 		data := make([]byte, ln)
-		n, err := ds.reader.Read(data)
+		n, err := r.Reader.Read(data)
 		if n != int(ln) {
 			return reflect.Value{}, errors.New("Insufficient data found in RIFF data block")
 		}
@@ -342,13 +360,3 @@ func (ds *decodeState) fieldValue(rv reflect.Value, ln uint32) (reflect.Value, e
 	}
 	return reflect.Value{}, nil
 }
-
-// Struct -> Fields
-//
-// Fields -> Field
-//
-// Field -> Struct
-//       -> Slice
-//
-// Slice -> []byte
-//       -> Struct

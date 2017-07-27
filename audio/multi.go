@@ -3,7 +3,7 @@ package audio
 import (
 	"time"
 
-	"github.com/200sc/klangsynthese/audio/filter/supports"
+	"github.com/pkg/errors"
 )
 
 // A Multi lets lists of audios be used simultaneously
@@ -32,18 +32,11 @@ func (m *Multi) Play() <-chan error {
 // Filter applies all the given filters on everything in the Multi
 func (m *Multi) Filter(fs ...Filter) (Audio, error) {
 	var err error
-	var consError supports.ConsError
 	for i, a := range m.Audios {
 		m.Audios[i], err = a.Filter(fs...)
-		if err != nil {
-			if consError == nil {
-				consError = err.(supports.ConsError)
-			} else {
-				consError = consError.Cons(err)
-			}
-		}
+		err = errors.Wrap(err, "Failed to apply filter")
 	}
-	return m, consError
+	return m, err
 }
 
 // MustFilter acts like filter but ignores errors.
@@ -52,17 +45,13 @@ func (m *Multi) MustFilter(fs ...Filter) Audio {
 	return a
 }
 
-// Stop stops all audios in the Multi. If any of the audios fail to be stopped,
-// following audios will not try to stop. Consider: should this behavior change?
+// Stop stops all audios in the Multi. Any that fail will report an error.
 func (m *Multi) Stop() error {
+	var err error
 	for _, a := range m.Audios {
-		err := a.Stop()
-		// Todo: consError?
-		if err != nil {
-			return err
-		}
+		err = errors.Wrap(a.Stop(), "Failed to stop audio")
 	}
-	return nil
+	return err
 }
 
 // Copy returns a copy of this Multi

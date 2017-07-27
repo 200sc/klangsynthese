@@ -7,7 +7,7 @@ import "github.com/200sc/klangsynthese/audio"
 // with .Play() but can take in the remotely variable
 // font filter options.
 //
-// Note that it is a concious choice for both Font and
+// Note that it is a conscious choice for both Font and
 // Audio to have a Filter(...Filter) function, so that when
 // a FontAudio is in use the user needs to specify which
 // element they want to apply a filter on. The alternative would

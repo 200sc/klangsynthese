@@ -1,0 +1,40 @@
+//+build darwin
+
+package audio
+
+import "errors"
+
+type darwinNopAudio struct {
+	Encoding
+}
+
+func (dna *darwinNopAudio) Play() <-chan error {
+	ch := make(chan error)
+	go func() {
+		ch <- errors.New("Playback on Darwin is not supported")
+	}()
+	return ch
+}
+
+func (dna *darwinNopAudio) Stop() error {
+	return errors.New("Playback on Darwin is not supported")
+}
+
+func (dna *darwinNopAudio) Filter(fs ...Filter) (Audio, error) {
+	var a Audio = dna
+	var err error
+	for _, f := range fs {
+		a, err = f.Apply(a)
+		err = errors.Wrap(err, "Failed to apply filter")
+	}
+	return dna, err
+}
+
+func (dna *darwinNopAudio) MustFilter(fs ...Filter) Audio {
+	a, _ := dna.Filter(fs...)
+	return a
+}
+
+func EncodeBytes(enc Encoding) (Audio, error) {
+	return &darwinNopAudio{enc}, nil
+}

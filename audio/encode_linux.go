@@ -3,7 +3,7 @@
 package audio
 
 import (
-	"github.com/200sc/klangsynthese/audio/filter/supports"
+	"github.com/pkg/errors"
 	"github.com/tryphon/alsa-go"
 )
 
@@ -31,18 +31,11 @@ func (aa *alsaAudio) Stop() error {
 func (aa *alsaAudio) Filter(fs ...Filter) (Audio, error) {
 	var a Audio = aa
 	var err error
-	var consError supports.ConsError
 	for _, f := range fs {
 		a, err = f.Apply(a)
-		if err != nil {
-			if consError == nil {
-				consError = err.(supports.ConsError)
-			} else {
-				consError = consError.Cons(err)
-			}
-		}
+		err = errors.Wrap(err, "Failed to apply filter")
 	}
-	return aa, consError
+	return aa, err
 }
 
 // MustFilter acts like Filter, but ignores errors (it does not panic,

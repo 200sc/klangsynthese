@@ -1,9 +1,16 @@
 # klangsynthese
 Waveform and Audio Synthesis library in Go
 
+[![GoDoc](https://godoc.org/github.com/200sc/klangsynthese?status.svg)](https://godoc.org/github.com/200sc/klangsynthese)
+[![Go Report Card](https://goreportcard.com/badge/github.com/200sc/klangsynthese)](https://goreportcard.com/report/github.com/200sc/klangsynthese)
+
 Klangsynthese right now supports a number of features that will work regardless of OS,
 and a number of features specific to Windows where the hope is to move support to Linux
 and Darwin.
+
+## Usage
+
+See test files.
 
 ## OS specific features
 

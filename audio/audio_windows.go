@@ -3,8 +3,8 @@
 package audio
 
 import (
-	"github.com/200sc/klangsynthese/audio/filter/supports"
 	"github.com/oov/directsound-go/dsound"
+	"github.com/pkg/errors"
 )
 
 type dsAudio struct {
@@ -54,29 +54,22 @@ func (ds *dsAudio) Stop() error {
 func (ds *dsAudio) Filter(fs ...Filter) (Audio, error) {
 	var a Audio = ds
 	var err error
-	var consError supports.ConsError
 	for _, f := range fs {
 		a, err = f.Apply(a)
-		if err != nil {
-			if consError == nil {
-				consError = err.(supports.ConsError)
-			} else {
-				consError = consError.Cons(err)
-			}
-		}
+		err = errors.Wrap(err, "Failed to apply filter")
 	}
 	// Consider: this is a significant amount
 	// of work to do just to make this an in-place filter.
 	// would it be worth it to offer both in place and non-inplace
 	// filter functions?
-	a2, err := EncodeBytes(*ds.Encoding)
-	if err != nil {
-		return nil, err
+	a2, err2 := EncodeBytes(*ds.Encoding)
+	if err2 != nil {
+		return nil, err2
 	}
 	// reassign the contents of ds to be that of the
 	// new audio, so that this filters in place
 	*ds = *a2.(*dsAudio)
-	return ds, consError
+	return ds, err
 }
 
 // MustFilter acts like Filter, but ignores errors (it does not panic,

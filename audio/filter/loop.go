@@ -19,7 +19,7 @@ func (lf Loop) Apply(a audio.Audio) (audio.Audio, error) {
 	return a, supports.NewUnsupported([]string{"Loop"})
 }
 
-// LoopOn sets the loop to hapen
+// LoopOn sets the loop to happen
 func LoopOn() Loop {
 	return func(b *bool) {
 		*b = true
