@@ -26,6 +26,15 @@ To develop with linux you'll need alsa:
 
 Binaries built with this will probably need alsa-base as well to run on Linux.
 
+## Quick recipe for testing on Linux
+
+This recipe should run the wav test on Linux:
+
+    sudo apt-get install alsa-base libasound2-dev
+    go get github.com/200sc/klangsynthese
+    go get github.com/stretchr/testify/assert
+    go test github.com/200sc/klangsynthese/wav
+
 ## Other features
 
 - [x] Wav support
