@@ -84,7 +84,7 @@ func NewFFTShifter(fftFrameSize int, oversampling int) (PitchShifter, error) {
 	ps.fftFrameSize = fftFrameSize
 	ps.oversampling = oversampling
 	ps.step = fftFrameSize / oversampling
-	ps.latency = fftFrameSize - step
+	ps.latency = fftFrameSize - ps.step
 	ps.stack = make([]float64, fftFrameSize)
 	ps.workBuffer = make([]float64, 2*fftFrameSize)
 	ps.magnitudes = make([]float64, fftFrameSize)
@@ -95,7 +95,7 @@ func NewFFTShifter(fftFrameSize int, oversampling int) (PitchShifter, error) {
 	ps.sumPhase = make([]float64, fftFrameSize/2+1)
 	ps.outAcc = make([]float64, 2*fftFrameSize)
 
-	ps.expected = 2 * math.Pi * float64(step) / float64(fftFrameSize)
+	ps.expected = 2 * math.Pi * float64(ps.step) / float64(fftFrameSize)
 
 	ps.window = make([]float64, fftFrameSize)
 	ps.windowFactors = make([]float64, fftFrameSize)
@@ -110,16 +110,6 @@ func NewFFTShifter(fftFrameSize int, oversampling int) (PitchShifter, error) {
 	ps.frame = make([]float64, fftFrameSize)
 	return ps, nil
 }
-
-const (
-	// Todo: move these to initialization function, offer a few pre-initialized
-	// ones
-	// this would also allocate the horde of buffers that get used
-	fftFrameSize = 1024
-	oversampling = 32
-	step         = fftFrameSize / oversampling
-	latency      = fftFrameSize - step
-)
 
 // PitchShift modifies filtered audio by the input float, between 0.5 and 2.0,
 // each end of the spectrum representing octave down and up respectively
@@ -146,7 +136,6 @@ func (ps FFTShifter) PitchShift(shiftBy float64) Encoding {
 			f64in := manip.BytesToF64(data, channels, bitDepth, c)
 			f64out := f64in
 
-			// At this point, we are confident we are correct
 			for i := 0; i < len(f64in); i++ {
 				// Get a frame
 				ps.frame[frameIndex] = f64in[i]
@@ -155,19 +144,19 @@ func (ps FFTShifter) PitchShift(shiftBy float64) Encoding {
 				frameIndex++
 
 				// A full frame has been obtained
-				if frameIndex >= fftFrameSize {
-					frameIndex = latency
+				if frameIndex >= ps.fftFrameSize {
+					frameIndex = ps.latency
 
 					// Windowing
-					for k := 0; k < fftFrameSize; k++ {
+					for k := 0; k < ps.fftFrameSize; k++ {
 						ps.workBuffer[2*k] = ps.frame[k] * ps.window[k]
 						ps.workBuffer[(2*k)+1] = 0
 					}
 
-					ShortTimeFourierTransform(ps.workBuffer, fftFrameSize, -1)
+					ShortTimeFourierTransform(ps.workBuffer, ps.fftFrameSize, -1)
 
 					// Analysis
-					for k := 0; k <= fftFrameSize/2; k++ {
+					for k := 0; k <= ps.fftFrameSize/2; k++ {
 						real := ps.workBuffer[2*k]
 						imag := ps.workBuffer[(2*k)+1]
 
@@ -189,33 +178,33 @@ func (ps FFTShifter) PitchShift(shiftBy float64) Encoding {
 						}
 
 						diff -= math.Pi * float64(deltaPhase)
-						diff *= oversampling / (math.Pi * 2)
+						diff *= float64(ps.oversampling) / (math.Pi * 2)
 						diff = (float64(k) + diff) * freqPerBin
 
 						ps.frequencies[k] = diff
 					}
 
 					// Processing
-					for k := 0; k < fftFrameSize; k++ {
+					for k := 0; k < ps.fftFrameSize; k++ {
 						ps.synthMagnitudes[k] = 0
 						ps.synthFrequencies[k] = 0
 					}
 
-					for k := 0; k < fftFrameSize/2; k++ {
+					for k := 0; k < ps.fftFrameSize/2; k++ {
 						l := int(float64(k) * shiftBy)
-						if l < fftFrameSize/2 {
+						if l < ps.fftFrameSize/2 {
 							ps.synthMagnitudes[l] += ps.magnitudes[k]
 							ps.synthFrequencies[l] = ps.frequencies[k] * shiftBy
 						}
 					}
 
 					// Synthesis
-					for k := 0; k <= fftFrameSize/2; k++ {
+					for k := 0; k <= ps.fftFrameSize/2; k++ {
 						magn := ps.synthMagnitudes[k]
 						tmp := ps.synthFrequencies[k]
 						tmp -= float64(k) * freqPerBin
 						tmp /= freqPerBin
-						tmp *= 2 * math.Pi / oversampling
+						tmp *= 2 * math.Pi / float64(ps.oversampling)
 						tmp += float64(k) * ps.expected
 						ps.sumPhase[k] += tmp
 
@@ -226,27 +215,27 @@ func (ps FFTShifter) PitchShift(shiftBy float64) Encoding {
 					// Remove negative frequencies
 					// I don't get how we know these ones are negative
 					// also this looks like it's going to overflow the slice
-					for k := fftFrameSize + 2; k < 2*fftFrameSize; k++ {
+					for k := ps.fftFrameSize + 2; k < 2*ps.fftFrameSize; k++ {
 						ps.workBuffer[k] = 0.0
 					}
 
-					ShortTimeFourierTransform(ps.workBuffer, fftFrameSize, 1)
+					ShortTimeFourierTransform(ps.workBuffer, ps.fftFrameSize, 1)
 
 					// Windowing
-					for k := 0; k < fftFrameSize; k++ {
+					for k := 0; k < ps.fftFrameSize; k++ {
 						ps.outAcc[k] += ps.windowFactors[k] * ps.workBuffer[2*k]
 					}
-					for k := 0; k < step; k++ {
+					for k := 0; k < ps.step; k++ {
 						ps.stack[k] = ps.outAcc[k]
 					}
 
 					// Shift accumulator, shift frame
-					for k := 0; k < fftFrameSize; k++ {
-						ps.outAcc[k] = ps.outAcc[k+step]
+					for k := 0; k < ps.fftFrameSize; k++ {
+						ps.outAcc[k] = ps.outAcc[k+ps.step]
 					}
 
-					for k := 0; k < latency; k++ {
-						ps.frame[k] = ps.frame[k+step]
+					for k := 0; k < ps.latency; k++ {
+						ps.frame[k] = ps.frame[k+ps.step]
 					}
 				}
 			}

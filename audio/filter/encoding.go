@@ -1,8 +1,6 @@
 package filter
 
 import (
-	"math"
-
 	"github.com/200sc/klangsynthese/audio"
 	"github.com/200sc/klangsynthese/audio/filter/supports"
 	"github.com/200sc/klangsynthese/audio/manip"
@@ -61,11 +59,4 @@ func mod(init, inc int, modFn func(float64) float64) Encoding {
 		}
 		*data = d
 	}
-}
-
-func signPow(f, pow float64) float64 {
-	if f < 0 {
-		return -math.Pow(-f, pow)
-	}
-	return math.Pow(f, pow)
 }

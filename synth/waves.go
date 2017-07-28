@@ -128,7 +128,7 @@ func (s Source) Triangle(opts ...Option) (audio.Audio, error) {
 		wave := make([]int16, int(s.Seconds*float64(s.SampleRate)))
 		for i := range wave {
 			p := math.Mod(s.Phase(i), 2*math.Pi)
-			m := int16(p * (2 * float64(s.Volume) / math.Pi))
+			m := int16(p * (2 * s.Volume / math.Pi))
 			if math.Sin(p) > 0 {
 				wave[i] = int16(-s.Volume) + m
 			} else {

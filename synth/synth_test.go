@@ -85,7 +85,7 @@ func TestPan(t *testing.T) {
 func TestStop(t *testing.T) {
 	a, _ := Int16.Sin()
 	<-a.Play()
-	a.Stop()
+	_ = a.Stop()
 	time.Sleep(1 * time.Second)
 	// assert that sound was not heard or was only heard very briefly
 }
@@ -97,9 +97,9 @@ func TestLoop(t *testing.T) {
 	time.Sleep(3 * time.Second)
 }
 
-func TestSpeed(t *testing.T) {
+func TestModSampleRate(t *testing.T) {
 	a, _ := Int16.Sin()
-	a2, _ := a.MustCopy().Filter(filter.Speed(.5))
+	a2, _ := a.MustCopy().Filter(filter.ModSampleRate(.5))
 	a.Play()
 	time.Sleep(1 * time.Second)
 	a2.Play()
@@ -110,7 +110,16 @@ func TestPitchShift(t *testing.T) {
 	a, _ := Int16.Sin(Duration(1 * time.Second))
 	a.Play()
 	time.Sleep(a.PlayLength())
-	a = a.MustCopy().MustFilter(filter.LowQualityShifter.PitchShift(0.5))
+	a = a.MustFilter(filter.LowQualityShifter.PitchShift(0.5))
 	a.Play()
-	time.Sleep(a.PlayLength() * 2)
+	time.Sleep(a.PlayLength())
+}
+
+func TestSpeed(t *testing.T) {
+	a, _ := Int16.Sin(Duration(1 * time.Second))
+	a.Play()
+	time.Sleep(a.PlayLength())
+	a = a.MustFilter(filter.Speed(.5, filter.HighQualityShifter))
+	a.Play()
+	time.Sleep(a.PlayLength())
 }

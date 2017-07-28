@@ -1,7 +1,5 @@
 package synth
 
-import "github.com/200sc/klangsynthese/audio/manip"
-
 // A Pitch is a helper type for synth functions so
 // a user can write A4 instead of a frequency value
 // for a desired tone
@@ -424,14 +422,4 @@ func (p Pitch) Down(s Step) Pitch {
 // integers representing their notes to get a pitch from said integer
 func NoteFromIndex(i int) Pitch {
 	return allPitches[i]
-}
-
-// Todo: this shouldn't be here?
-// Todo: there are more methods of pitch detection than just this
-func PitchDetect(data []byte, bitrate, channels uint16, sampleRate uint32) Pitch {
-
-	// examine the pitch of the 0th channel
-	complex := manip.BytesToF64(data, channels, bitrate, 0)
-	real := make([]float64)
-
 }
