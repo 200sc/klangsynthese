@@ -5,6 +5,7 @@ import (
 
 	"github.com/200sc/klangsynthese/audio"
 	"github.com/200sc/klangsynthese/audio/filter/supports"
+	"github.com/200sc/klangsynthese/audio/manip"
 )
 
 // Encoding filters are functions on any combination of the values
@@ -53,7 +54,7 @@ func mod(init, inc int, modFn func(float64) float64) Encoding {
 		switch byteDepth {
 		case 2:
 			for i := byteDepth * init; i < len(d); i += byteDepth * inc {
-				setInt16(d, i, round(modFn(float64(getInt16(d, i)))))
+				manip.SetInt16(d, i, manip.Round(modFn(float64(manip.GetInt16(d, i)))))
 			}
 		default:
 			// log unsupported byte depth

@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/200sc/klangsynthese/audio/filter/supports"
+	"github.com/200sc/klangsynthese/audio/manip"
 )
 
 /*****************************************************************************
@@ -52,6 +53,7 @@ type PitchShifter interface {
 	PitchShift(float64) Encoding
 }
 
+// FFTShifter holds buffers and settings for performing a pitch shift on PCM audio
 type FFTShifter struct {
 	fftFrameSize                      int
 	oversampling                      int
@@ -141,11 +143,9 @@ func (ps FFTShifter) PitchShift(shiftBy float64) Encoding {
 		// for each channel individually
 		for c := 0; c < int(channels); c++ {
 			// convert this to a channel-specific float64 buffer
-			f64in := make([]float64, len(data)/int(channels))
+			f64in := manip.BytesToF64(data, channels, bitDepth, c)
 			f64out := f64in
-			for i := c * int(byteDepth); i < len(data); i += int(byteDepth * 2) {
-				f64in[i/int(byteDepth*2)] = getFloat64(data, i, byteDepth)
-			}
+
 			// At this point, we are confident we are correct
 			for i := 0; i < len(f64in); i++ {
 				// Get a frame
@@ -252,7 +252,7 @@ func (ps FFTShifter) PitchShift(shiftBy float64) Encoding {
 			}
 			// remap this f64in to the output
 			for i := c * int(byteDepth); i < len(data); i += int(byteDepth * 2) {
-				setInt16_f64(out, i, f64in[i/int(byteDepth*2)])
+				manip.SetInt16_f64(out, i, f64in[i/int(byteDepth*2)])
 			}
 		}
 		datap := senc.GetData()
@@ -295,7 +295,6 @@ func ShortTimeFourierTransform(data []float64, fftFrameSize, sign int) {
 		wi := float64(sign) * math.Sin(arg)
 		for j := 0; j < le2; j += 2 {
 			for i := j; i < 2*fftFrameSize; i += le {
-				//fmt.Println("k,j,i,le,le2", k, j, i, le, le2, max)
 				tr := data[i+le2]*ur - data[i+le2+1]*ui
 				ti := data[i+le2]*ui + data[i+le2+1]*ur
 				data[i+le2] = data[i] - tr
