@@ -6,7 +6,7 @@ import (
 	"github.com/200sc/klangsynthese/audio/filter/supports"
 )
 
-// Speed modifies the filtered audio by ratio speed, changing its sample rate
+// Speed modifies the filtered audio by a speed ratio, changing its sample rate
 // in the process while maintaining pitch.
 func Speed(ratio float64, pitchShifter PitchShifter) Encoding {
 	return func(senc supports.Encoding) {

@@ -30,12 +30,14 @@ func (aa *alsaAudio) Stop() error {
 
 func (aa *alsaAudio) Filter(fs ...Filter) (Audio, error) {
 	var a Audio = aa
-	var err error
+	var err, consErr error
 	for _, f := range fs {
 		a, err = f.Apply(a)
-		err = errors.Wrap(err, "Failed to apply filter")
+		if err != nil {
+			consErr = errors.New(err.Error() + ":" + consErr.Error())
+		}
 	}
-	return aa, err
+	return aa, consErr
 }
 
 // MustFilter acts like Filter, but ignores errors (it does not panic,

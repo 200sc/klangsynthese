@@ -70,8 +70,6 @@ type FFTShifter struct {
 }
 
 // These are built in shifters with some common inputs
-// The algorithm suggests that non-1024 frame sizes are a-okay
-// but all the ones I've tried have crashed.
 var (
 	LowQualityShifter, _  = NewFFTShifter(1024, 8)
 	HighQualityShifter, _ = NewFFTShifter(1024, 32)

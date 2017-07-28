@@ -22,12 +22,14 @@ func (dna *darwinNopAudio) Stop() error {
 
 func (dna *darwinNopAudio) Filter(fs ...Filter) (Audio, error) {
 	var a Audio = dna
-	var err error
+	var err, consErr error
 	for _, f := range fs {
 		a, err = f.Apply(a)
-		err = errors.Wrap(err, "Failed to apply filter")
+		if err != nil {
+			consErr = errors.New(err.Error() + ":" + consErr.Error())
+		}
 	}
-	return dna, err
+	return dna, consErr
 }
 
 func (dna *darwinNopAudio) MustFilter(fs ...Filter) Audio {

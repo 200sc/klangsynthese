@@ -31,12 +31,14 @@ func (m *Multi) Play() <-chan error {
 
 // Filter applies all the given filters on everything in the Multi
 func (m *Multi) Filter(fs ...Filter) (Audio, error) {
-	var err error
+	var err, consErr error
 	for i, a := range m.Audios {
 		m.Audios[i], err = a.Filter(fs...)
-		err = errors.Wrap(err, "Failed to apply filter")
+		if err != nil {
+			consErr = errors.New(err.Error() + ":" + consErr.Error())
+		}
 	}
-	return m, err
+	return m, consErr
 }
 
 // MustFilter acts like filter but ignores errors.
