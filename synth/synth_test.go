@@ -106,20 +106,11 @@ func TestSpeed(t *testing.T) {
 	time.Sleep(2 * time.Second)
 }
 
-func TestPrintPitch(t *testing.T) {
-	for i := int(C0); i < int(B8); i = int(Pitch(i).Up(HalfStep)) {
-		fmt.Println(i)
-		a, _ := Int16.Sin(Duration(500*time.Millisecond), AtPitch(Pitch(i)))
-		a.Play()
-		time.Sleep(a.PlayLength())
-	}
-}
-
 func TestPitchShift(t *testing.T) {
-	a, _ := Int16.Sin()
+	a, _ := Int16.Sin(Duration(1 * time.Second))
 	a.Play()
 	time.Sleep(a.PlayLength())
-	a = a.MustCopy().MustFilter(filter.PitchShift(0.5))
+	a = a.MustCopy().MustFilter(filter.LowQualityShifter.PitchShift(0.5))
 	a.Play()
-	time.Sleep(a.PlayLength())
+	time.Sleep(a.PlayLength() * 2)
 }

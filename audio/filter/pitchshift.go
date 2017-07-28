@@ -1,19 +1,9 @@
 package filter
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/200sc/klangsynthese/audio/filter/supports"
-)
-
-const (
-	// Todo: move these to initialization function, offer a few pre-initialized
-	// ones
-	fftFrameSize = 1024
-	oversampling = 32
-	step         = fftFrameSize / oversampling
-	latency      = fftFrameSize - step
 )
 
 /*****************************************************************************
@@ -52,10 +42,86 @@ const (
 *****************************************************************************/
 // As is standard with translations of this code to other languages,
 // Go translation copyright Patrick Stephen 2017
+// To be clear, the PitchShift function + FFT is what had to be translated
+
+// A PitchShifter has an encoding function that will shift
+// a pitch up to an octave up or down (0.5 -> octave down, 2.0 -> octave up)
+// these are for lower-level use, and a similar type that takes in steps to
+// shift by (and eventually pitches to set to) will follow.
+type PitchShifter interface {
+	PitchShift(float64) Encoding
+}
+
+type FFTShifter struct {
+	fftFrameSize                      int
+	oversampling                      int
+	step                              int
+	latency                           int
+	stack, frame                      []float64
+	workBuffer                        []float64
+	magnitudes, frequencies           []float64
+	synthMagnitudes, synthFrequencies []float64
+	lastPhase, sumPhase               []float64
+	outAcc                            []float64
+	expected                          float64
+	window, windowFactors             []float64
+}
+
+// These are built in shifters with some common inputs
+// The algorithm suggests that non-1024 frame sizes are a-okay
+// but all the ones I've tried have crashed.
+var (
+	LowQualityShifter, _  = NewFFTShifter(1024, 8)
+	HighQualityShifter, _ = NewFFTShifter(1024, 32)
+)
+
+// NewFFTShifter returns a pitch shifter that uses fast fourier transforms
+func NewFFTShifter(fftFrameSize int, oversampling int) (PitchShifter, error) {
+	// Todo: check that the frame size and oversampling rate make sense
+	ps := FFTShifter{}
+	ps.fftFrameSize = fftFrameSize
+	ps.oversampling = oversampling
+	ps.step = fftFrameSize / oversampling
+	ps.latency = fftFrameSize - step
+	ps.stack = make([]float64, fftFrameSize)
+	ps.workBuffer = make([]float64, 2*fftFrameSize)
+	ps.magnitudes = make([]float64, fftFrameSize)
+	ps.frequencies = make([]float64, fftFrameSize)
+	ps.synthMagnitudes = make([]float64, fftFrameSize)
+	ps.synthFrequencies = make([]float64, fftFrameSize)
+	ps.lastPhase = make([]float64, fftFrameSize/2+1)
+	ps.sumPhase = make([]float64, fftFrameSize/2+1)
+	ps.outAcc = make([]float64, 2*fftFrameSize)
+
+	ps.expected = 2 * math.Pi * float64(step) / float64(fftFrameSize)
+
+	ps.window = make([]float64, fftFrameSize)
+	ps.windowFactors = make([]float64, fftFrameSize)
+	t := 0.0
+	for i := 0; i < fftFrameSize; i++ {
+		w := -0.5*math.Cos(t) + .5
+		ps.window[i] = w
+		ps.windowFactors[i] = w * (2.0 / float64(fftFrameSize*oversampling))
+		t += (math.Pi * 2) / float64(fftFrameSize)
+	}
+
+	ps.frame = make([]float64, fftFrameSize)
+	return ps, nil
+}
+
+const (
+	// Todo: move these to initialization function, offer a few pre-initialized
+	// ones
+	// this would also allocate the horde of buffers that get used
+	fftFrameSize = 1024
+	oversampling = 32
+	step         = fftFrameSize / oversampling
+	latency      = fftFrameSize - step
+)
 
 // PitchShift modifies filtered audio by the input float, between 0.5 and 2.0,
 // each end of the spectrum representing octave down and up respectively
-func PitchShift(shiftBy float64) Encoding {
+func (ps FFTShifter) PitchShift(shiftBy float64) Encoding {
 	return func(senc supports.Encoding) {
 		data := *senc.GetData()
 		bitDepth := *senc.GetBitDepth()
@@ -66,31 +132,9 @@ func PitchShift(shiftBy float64) Encoding {
 		// Jeeez
 		out := make([]byte, len(data))
 		copy(out, data)
-		stack := make([]float64, fftFrameSize)
-		workBuffer := make([]float64, 2*fftFrameSize)
-		magnitudes := make([]float64, fftFrameSize)
-		frequencies := make([]float64, fftFrameSize)
-		synthMagnitudes := make([]float64, fftFrameSize)
-		synthFrequencies := make([]float64, fftFrameSize)
-		lastPhase := make([]float64, fftFrameSize/2+1)
-		sumPhase := make([]float64, fftFrameSize/2+1)
-		outAcc := make([]float64, 2*fftFrameSize)
 
-		freqPerBin := float64(sampleRate) / float64(fftFrameSize)
-		expected := 2 * math.Pi * float64(step) / float64(fftFrameSize)
-
-		window := make([]float64, fftFrameSize)
-		windowFactors := make([]float64, fftFrameSize)
-		t := 0.0
-		for i := 0; i < fftFrameSize; i++ {
-			w := -0.5*math.Cos(t) + .5
-			window[i] = w
-			windowFactors[i] = w * (2.0 / (fftFrameSize * oversampling))
-			t += (math.Pi * 2) / fftFrameSize
-		}
-
-		frame := make([]float64, fftFrameSize)
-		frameIndex := latency
+		freqPerBin := float64(sampleRate) / float64(ps.fftFrameSize)
+		frameIndex := ps.latency
 
 		// End jeeeez
 
@@ -105,8 +149,9 @@ func PitchShift(shiftBy float64) Encoding {
 			// At this point, we are confident we are correct
 			for i := 0; i < len(f64in); i++ {
 				// Get a frame
-				frame[frameIndex] = f64in[i]
-				f64out[i] = stack[frameIndex-latency]
+				ps.frame[frameIndex] = f64in[i]
+				// Bug here for early i values: they'll all be 0!
+				f64out[i] = ps.stack[frameIndex-ps.latency]
 				frameIndex++
 
 				// A full frame has been obtained
@@ -115,26 +160,26 @@ func PitchShift(shiftBy float64) Encoding {
 
 					// Windowing
 					for k := 0; k < fftFrameSize; k++ {
-						workBuffer[2*k] = frame[k] * window[k]
-						workBuffer[(2*k)+1] = 0
+						ps.workBuffer[2*k] = ps.frame[k] * ps.window[k]
+						ps.workBuffer[(2*k)+1] = 0
 					}
 
-					ShortTimeFourierTransform(workBuffer, fftFrameSize, -1)
+					ShortTimeFourierTransform(ps.workBuffer, fftFrameSize, -1)
 
 					// Analysis
 					for k := 0; k <= fftFrameSize/2; k++ {
-						real := workBuffer[2*k]
-						imag := workBuffer[(2*k)+1]
+						real := ps.workBuffer[2*k]
+						imag := ps.workBuffer[(2*k)+1]
 
 						magn := 2 * math.Sqrt(real*real+imag*imag)
-						magnitudes[k] = magn
+						ps.magnitudes[k] = magn
 
 						phase := math.Atan2(imag, real)
 
-						diff := phase - lastPhase[k]
-						lastPhase[k] = phase
+						diff := phase - ps.lastPhase[k]
+						ps.lastPhase[k] = phase
 
-						diff -= float64(k) * expected
+						diff -= float64(k) * ps.expected
 
 						deltaPhase := int(diff * (1 / math.Pi))
 						if deltaPhase >= 0 {
@@ -147,61 +192,61 @@ func PitchShift(shiftBy float64) Encoding {
 						diff *= oversampling / (math.Pi * 2)
 						diff = (float64(k) + diff) * freqPerBin
 
-						frequencies[k] = diff
+						ps.frequencies[k] = diff
 					}
 
 					// Processing
 					for k := 0; k < fftFrameSize; k++ {
-						synthMagnitudes[k] = 0
-						synthFrequencies[k] = 0
+						ps.synthMagnitudes[k] = 0
+						ps.synthFrequencies[k] = 0
 					}
 
 					for k := 0; k < fftFrameSize/2; k++ {
 						l := int(float64(k) * shiftBy)
 						if l < fftFrameSize/2 {
-							synthMagnitudes[l] += magnitudes[k]
-							synthFrequencies[l] = frequencies[k] * shiftBy
+							ps.synthMagnitudes[l] += ps.magnitudes[k]
+							ps.synthFrequencies[l] = ps.frequencies[k] * shiftBy
 						}
 					}
 
 					// Synthesis
 					for k := 0; k <= fftFrameSize/2; k++ {
-						magn := synthMagnitudes[k]
-						tmp := synthFrequencies[k]
+						magn := ps.synthMagnitudes[k]
+						tmp := ps.synthFrequencies[k]
 						tmp -= float64(k) * freqPerBin
 						tmp /= freqPerBin
 						tmp *= 2 * math.Pi / oversampling
-						tmp += float64(k) * expected
-						sumPhase[k] += tmp
+						tmp += float64(k) * ps.expected
+						ps.sumPhase[k] += tmp
 
-						workBuffer[2*k] = magn * math.Cos(sumPhase[k])
-						workBuffer[(2*k)+1] = magn * math.Sin(sumPhase[k])
+						ps.workBuffer[2*k] = magn * math.Cos(ps.sumPhase[k])
+						ps.workBuffer[(2*k)+1] = magn * math.Sin(ps.sumPhase[k])
 					}
 
 					// Remove negative frequencies
 					// I don't get how we know these ones are negative
 					// also this looks like it's going to overflow the slice
 					for k := fftFrameSize + 2; k < 2*fftFrameSize; k++ {
-						workBuffer[k] = 0.0
+						ps.workBuffer[k] = 0.0
 					}
 
-					ShortTimeFourierTransform(workBuffer, fftFrameSize, 1)
+					ShortTimeFourierTransform(ps.workBuffer, fftFrameSize, 1)
 
 					// Windowing
 					for k := 0; k < fftFrameSize; k++ {
-						outAcc[k] += windowFactors[k] * workBuffer[2*k]
+						ps.outAcc[k] += ps.windowFactors[k] * ps.workBuffer[2*k]
 					}
 					for k := 0; k < step; k++ {
-						stack[k] = outAcc[k]
+						ps.stack[k] = ps.outAcc[k]
 					}
 
 					// Shift accumulator, shift frame
 					for k := 0; k < fftFrameSize; k++ {
-						outAcc[k] = outAcc[k+step]
+						ps.outAcc[k] = ps.outAcc[k+step]
 					}
 
 					for k := 0; k < latency; k++ {
-						frame[k] = frame[k+step]
+						ps.frame[k] = ps.frame[k+step]
 					}
 				}
 			}
@@ -212,13 +257,18 @@ func PitchShift(shiftBy float64) Encoding {
 		}
 		datap := senc.GetData()
 		*datap = out
-		for i := 0; i < 80; i += 2 {
-			fmt.Print(getInt16(*datap, i))
-			fmt.Print(" ")
-		}
 	}
 }
 
+// ShortTimeFourierTransform : FFT routine, (C)1996 S.M.Bernsee. Sign = -1 is FFT, 1 is iFFT (inverse)
+// Fills fftBuffer[0...2*fftFrameSize-1] with the Fourier transform of the
+// time domain data in fftBuffer[0...2*fftFrameSize-1]. The FFT array takes
+// and returns the cosine and sine parts in an interleaved manner, ie.
+// fftBuffer[0] = cosPart[0], fftBuffer[1] = sinPart[0], asf. fftFrameSize
+// must be a power of 2. It expects a complex input signal (see footnote 2),
+// ie. when working with 'common' audio signals our input signal has to be
+// passed as {in[0],0.,in[1],0.,in[2],0.,...} asf. In that case, the transform
+// of the frequencies of interest is in fftBuffer[0...fftFrameSize].
 func ShortTimeFourierTransform(data []float64, fftFrameSize, sign int) {
 	for i := 2; i < 2*(fftFrameSize-2); i += 2 {
 		j := 0
