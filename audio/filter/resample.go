@@ -6,15 +6,8 @@ import (
 	"github.com/200sc/klangsynthese/audio/filter/supports"
 )
 
-func Resample(newSampleRate uint32, pitchShifter PitchShifter) Encoding {
-	return func(senc supports.Encoding) {
-		oldSampleRate := *senc.GetSampleRate()
-		ratio := float64(newSampleRate) / float64(oldSampleRate)
-		Speed(ratio, pitchShifter)(senc)
-		fmt.Println(newSampleRate, *senc.GetSampleRate())
-	}
-}
-
+// Speed modifies the filtered audio by ratio speed, changing its sample rate
+// in the process while maintaining pitch.
 func Speed(ratio float64, pitchShifter PitchShifter) Encoding {
 	return func(senc supports.Encoding) {
 		r := ratio
