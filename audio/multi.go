@@ -49,11 +49,18 @@ func (m *Multi) MustFilter(fs ...Filter) Audio {
 
 // Stop stops all audios in the Multi. Any that fail will report an error.
 func (m *Multi) Stop() error {
-	var err error
+	var err, consErr error
 	for _, a := range m.Audios {
-		err = errors.Wrap(a.Stop(), "Failed to stop audio")
+		err = a.Stop()
+		if err != nil {
+			if consErr == nil {
+				consErr = err
+			} else {
+				consErr = errors.New(err.Error() + ":" + consErr.Error())
+			}
+		}
 	}
-	return err
+	return consErr
 }
 
 // Copy returns a copy of this Multi

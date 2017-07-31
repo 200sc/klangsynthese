@@ -57,7 +57,11 @@ func (ds *dsAudio) Filter(fs ...Filter) (Audio, error) {
 	for _, f := range fs {
 		a, err = f.Apply(a)
 		if err != nil {
-			consErr = errors.New(err.Error() + ":" + consErr.Error())
+			if consErr == nil {
+				consErr = err
+			} else {
+				consErr = errors.New(err.Error() + ":" + consErr.Error())
+			}
 		}
 	}
 	// Consider: this is a significant amount
