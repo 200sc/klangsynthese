@@ -26,7 +26,7 @@ func bytesFromInts(is []int16, channels int) []byte {
 			wave[i+(2*c)+1] = wave[i+1]
 		}
 	}
-	wave = append(wave, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	wave = append(wave, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 	return wave
 }
 
