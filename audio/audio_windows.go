@@ -53,10 +53,12 @@ func (ds *dsAudio) Stop() error {
 
 func (ds *dsAudio) Filter(fs ...Filter) (Audio, error) {
 	var a Audio = ds
-	var err error
+	var err, consErr error
 	for _, f := range fs {
 		a, err = f.Apply(a)
-		err = errors.Wrap(err, "Failed to apply filter")
+		if err != nil {
+			consErr = errors.New(err.Error() + ":" + consErr.Error())
+		}
 	}
 	// Consider: this is a significant amount
 	// of work to do just to make this an in-place filter.
@@ -69,7 +71,7 @@ func (ds *dsAudio) Filter(fs ...Filter) (Audio, error) {
 	// reassign the contents of ds to be that of the
 	// new audio, so that this filters in place
 	*ds = *a2.(*dsAudio)
-	return ds, err
+	return ds, consErr
 }
 
 // MustFilter acts like Filter, but ignores errors (it does not panic,

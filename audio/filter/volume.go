@@ -1,6 +1,9 @@
 package filter
 
-import "github.com/200sc/klangsynthese/audio/filter/supports"
+import (
+	"github.com/200sc/klangsynthese/audio/filter/supports"
+	"github.com/200sc/klangsynthese/audio/manip"
+)
 
 // Volume will magnify the data by mult, increasing or reducing the volume
 // of the output sound. For mult <= 1 this should have no unexpected behavior,
@@ -46,8 +49,8 @@ func VolumeBalance(lMult, rMult float64) Encoding {
 					v += int16(int(d[i+j])+int(d[i+j+byteDepth])) / 2 << shift
 					shift += 8
 				}
-				l := round(float64(v) * lMult)
-				r := round(float64(v) * rMult)
+				l := manip.Round(float64(v) * lMult)
+				r := manip.Round(float64(v) * rMult)
 				for j := 0; j < byteDepth; j++ {
 					d[i+j] = byte(l & 255)
 					d[i+j+byteDepth] = byte(r & 255)
