@@ -302,6 +302,10 @@ func (r *Reader) fieldValue(rv reflect.Value, ln uint32) (reflect.Value, error) 
 	case reflect.Struct:
 		st := rv.Addr().Interface()
 		err := binary.Read(r.Reader, binary.LittleEndian, st)
+		if err != nil {
+			// Something on this struct has an undefined size
+			// Read each field in part by part.
+		}
 		return reflect.Indirect(reflect.ValueOf(st)), err
 	case reflect.String:
 		data := make([]byte, ln)
