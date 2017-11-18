@@ -13,7 +13,7 @@ import (
 
 // Load loads an mp3-encoded reader into an audio
 func Load(r io.ReadCloser) (audio.Audio, error) {
-	d, err := haj.Decode(r)
+	d, err := haj.NewDecoder(r)
 	if err != nil {
 		return nil, err
 	}
