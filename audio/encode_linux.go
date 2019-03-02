@@ -3,8 +3,8 @@
 package audio
 
 import (
+	"github.com/oakmound/alsa-go"
 	"github.com/pkg/errors"
-	"github.com/tryphon/alsa-go"
 )
 
 type alsaAudio struct {

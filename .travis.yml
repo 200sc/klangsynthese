@@ -6,4 +6,6 @@ go:
 os:
  - osx
 
-script: go test ./audio
+script: 
+  go get -u github.com/stretchr/testify/assert
+  go test ./audio

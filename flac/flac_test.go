@@ -14,7 +14,7 @@ func TestBasicFlac(t *testing.T) {
 	f, err := os.Open("test2.flac")
 	fmt.Println(f)
 	assert.Nil(t, err)
-	a, err2 := NewController().Load(f)
+	a, err2 := Load(f)
 	fmt.Println(a)
 	assert.Nil(t, err2)
 	fmt.Println("Now playing")
