@@ -3,21 +3,63 @@
 package audio
 
 import (
-	"github.com/oakmound/alsa-go"
+	"sync"
+
 	"github.com/pkg/errors"
+	"github.com/yobert/alsa"
 )
 
 type alsaAudio struct {
 	*Encoding
-	*alsa.Handle
+	*alsa.Device
+	bytesPerPeriod int
+	period         int
+	playProgress   int
+	playing        bool
+	playMutex      sync.Mutex
 }
 
 func (aa *alsaAudio) Play() <-chan error {
 	ch := make(chan error)
+	// If currently playing, restart
+	aa.playMutex.Lock()
+	if aa.playing {
+		aa.playProgress = 0
+		aa.playMutex.Unlock()
+		return
+	}
+	aa.playMutex.Unlock()
 	go func() {
-		// Todo: loop? library does not export loop
-		_, err := aa.Handle.Write(aa.Encoding.Data)
-		ch <- err
+		for {
+			var data []byte
+			if len(aa.Encoding.Data)-aa.playProgress >= aa.period {
+				data = aa.Encoding.Data[aa.playProgress:]
+				if aa.Loop {
+					delta := aa.period - (len(aa.Encoding.Data)-aa.playProgress)
+					data = append(data, aa.Encoding.Data[:delta)
+				}
+			} else {
+				data = aa.Encoding.Data[aa.playProgress : aa.playProgress+aa.period]
+			}
+			err := aa.Device.Write(data, aa.period)
+			if err != nil {
+				ch <- err
+				return
+			}
+			// Consider: its racy, but we could remove this lock and risk
+			// skipping the first period of the audio on concurrent play requests
+			aa.playMutex.Lock()
+			aa.playProgress += aa.period
+			if aa.playProgress > len(aa.Encoding.Data) {
+				if aa.Loop {
+					aa.playProgress %= len(aa.Encoding.Data)
+				} else {
+					aa.playMutex.Unlock()
+					return 
+				}
+			}
+			aa.playMutex.Unlock()
+		}
 	}()
 	return ch
 }
@@ -52,31 +94,86 @@ func (aa *alsaAudio) MustFilter(fs ...Filter) Audio {
 }
 
 func EncodeBytes(enc Encoding) (Audio, error) {
-	handle := alsa.New()
-	err := handle.Open("default", alsa.StreamTypePlayback, alsa.ModeBlock)
+	handle, err := openDevice()
 	if err != nil {
 		return nil, err
 	}
-
-	handle.SampleFormat = alsaFormat(enc.Bits)
-	handle.SampleRate = int(enc.SampleRate)
-	handle.Channels = int(enc.Channels)
-	err = handle.ApplyHwParams()
+	//err := handle.Open("default", alsa.StreamTypePlayback, alsa.ModeBlock)
+	//if err != nil {
+	//	return nil, err
+	//}
+	// Todo: annotate these errors with more info
+	format, err := alsaFormat(enc.Bits)
+	if err != nil {
+		return nil, err
+	}
+	_, err := handle.NegotiateFormat(format)
+	if err != nil {
+		return nil, err
+	}
+	_, err := handle.NegotiateRate(int(enc.SampleRate))
+	if err != nil {
+		return nil, err
+	}
+	_, err := handle.NegotiateChannels(int(enc.Channels))
+	if err != nil {
+		return nil, err
+	}
+	// Default value at recommendation of library
+	period, err := handle.NegotiatePeriodSize(2048)
+	if err != nil {
+		return nil, err
+	}
+	_, err := handle.NegotiateBufferSize(4096)
+	if err != nil {
+		return nil, err
+	}
+	err = handle.Prepare()
 	if err != nil {
 		return nil, err
 	}
 	return &alsaAudio{
-		&enc,
-		handle,
+		Encoding:       &enc,
+		Device:         handle,
+		period:         period,
+		bytesPerPeriod: period * (enc.Bits / 8),
 	}, nil
 }
 
-func alsaFormat(bits uint16) alsa.SampleFormat {
+func openDevice() (*alsa.Device, error) {
+	cards, err := alsa.OpenCards()
+	if err != nil {
+		return nil, err
+	}
+	for i, c := range cards {
+		dvcs, err := c.Devices()
+		if err != nil {
+			alsa.CloseCards([]*alsa.Card{c})
+			continue
+		}
+		for j, d := range dvcs {
+			if d.Type != alsa.PCM || !d.Play {
+				d.Close()
+				continue
+			}
+			// We've a found a device we can hypothetically use
+			// Close all other cards and devices
+			for h := j + 1; h < len(dvcs); h++ {
+				dvcs[h].Close()
+			}
+			alsa.CloseCards(cards[i+1:])
+			return d, d.Open()
+		}
+		alsa.CloseCards([]*alsa.Card{c})
+	}
+}
+
+func alsaFormat(bits uint16) (alsa.FormatType, error) {
 	switch bits {
 	case 8:
-		return alsa.SampleFormatS8
+		return alsa.S8, nil
 	case 16:
-		return alsa.SampleFormatS16LE
+		return alsa.S16_LE, nil
 	}
-	return alsa.SampleFormatUnknown
+	return 0, errors.New("Undefined alsa format for encoding bits")
 }
