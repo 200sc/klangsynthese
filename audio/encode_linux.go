@@ -3,8 +3,6 @@
 package audio
 
 import (
-	"sync"
-
 	"github.com/pkg/errors"
 	"github.com/yobert/alsa"
 )
@@ -15,20 +13,18 @@ type alsaAudio struct {
 	bytesPerPeriod int
 	period         int
 	playProgress   int
+	stopCh         chan struct{}
 	playing        bool
-	playMutex      sync.Mutex
 }
 
 func (aa *alsaAudio) Play() <-chan error {
 	ch := make(chan error)
 	// If currently playing, restart
-	aa.playMutex.Lock()
 	if aa.playing {
 		aa.playProgress = 0
-		aa.playMutex.Unlock()
 		return
 	}
-	aa.playMutex.Unlock()
+	aa.playing = true
 	go func() {
 		for {
 			var data []byte
@@ -43,31 +39,50 @@ func (aa *alsaAudio) Play() <-chan error {
 			}
 			err := aa.Device.Write(data, aa.period)
 			if err != nil {
-				ch <- err
-				return
+				select {
+				case ch <- err:
+				default:
+				}
+				break
 			}
-			// Consider: its racy, but we could remove this lock and risk
-			// skipping the first period of the audio on concurrent play requests
-			aa.playMutex.Lock()
 			aa.playProgress += aa.period
 			if aa.playProgress > len(aa.Encoding.Data) {
 				if aa.Loop {
 					aa.playProgress %= len(aa.Encoding.Data)
 				} else {
 					aa.playMutex.Unlock()
-					return
+					select {
+					case ch <- nil:
+					default:
+					}
+					break
 				}
 			}
-			aa.playMutex.Unlock()
+			select {
+			case <-aa.stopCh:
+				select {
+				case ch <- nil:
+				default:
+				}
+				break
+			default:
+			}
 		}
+		aa.playing = false
+		aa.playProgress = 0
 	}()
 	return ch
 }
 
 func (aa *alsaAudio) Stop() error {
-	// Todo: don't just pause man, actually stop
-	// library we are using does not export stop
-	return aa.Pause()
+	if aa.playing {
+		go func() {
+			aa.stopCh <- struct{}{}
+		}()
+	} else {
+		return errors.New("Audio not playing, cannot stop")
+	}
+	return nil
 }
 
 func (aa *alsaAudio) Filter(fs ...Filter) (Audio, error) {
@@ -136,6 +151,7 @@ func EncodeBytes(enc Encoding) (Audio, error) {
 		Encoding:       &enc,
 		Device:         handle,
 		period:         period,
+		stopCh:         make(chan struct{}),
 		bytesPerPeriod: period * (enc.Bits / 8),
 	}, nil
 }
