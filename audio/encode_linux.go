@@ -15,16 +15,17 @@ type alsaAudio struct {
 	playProgress   int
 	stopCh         chan struct{}
 	playing        bool
+	playCh         chan error
 }
 
 func (aa *alsaAudio) Play() <-chan error {
-	ch := make(chan error)
 	// If currently playing, restart
 	if aa.playing {
 		aa.playProgress = 0
-		return
+		return aa.playCh
 	}
 	aa.playing = true
+	aa.playCh = make(chan error)
 	go func() {
 		for {
 			var data []byte
@@ -32,7 +33,7 @@ func (aa *alsaAudio) Play() <-chan error {
 				data = aa.Encoding.Data[aa.playProgress:]
 				if aa.Loop {
 					delta := aa.period - (len(aa.Encoding.Data) - aa.playProgress)
-					data = append(data, aa.Encoding.Data[:delta])
+					data = append(data, aa.Encoding.Data[:delta]...)
 				}
 			} else {
 				data = aa.Encoding.Data[aa.playProgress : aa.playProgress+aa.period]
@@ -40,7 +41,7 @@ func (aa *alsaAudio) Play() <-chan error {
 			err := aa.Device.Write(data, aa.period)
 			if err != nil {
 				select {
-				case ch <- err:
+				case aa.playCh <- err:
 				default:
 				}
 				break
@@ -50,9 +51,8 @@ func (aa *alsaAudio) Play() <-chan error {
 				if aa.Loop {
 					aa.playProgress %= len(aa.Encoding.Data)
 				} else {
-					aa.playMutex.Unlock()
 					select {
-					case ch <- nil:
+					case aa.playCh <- nil:
 					default:
 					}
 					break
@@ -61,7 +61,7 @@ func (aa *alsaAudio) Play() <-chan error {
 			select {
 			case <-aa.stopCh:
 				select {
-				case ch <- nil:
+				case aa.playCh <- nil:
 				default:
 				}
 				break
@@ -71,7 +71,7 @@ func (aa *alsaAudio) Play() <-chan error {
 		aa.playing = false
 		aa.playProgress = 0
 	}()
-	return ch
+	return aa.playCh
 }
 
 func (aa *alsaAudio) Stop() error {
@@ -182,6 +182,7 @@ func openDevice() (*alsa.Device, error) {
 		}
 		alsa.CloseCards([]*alsa.Card{c})
 	}
+	return nil, errors.New("No valid device found")
 }
 
 func alsaFormat(bits uint16) (alsa.FormatType, error) {
