@@ -35,8 +35,8 @@ func (aa *alsaAudio) Play() <-chan error {
 			if len(aa.Encoding.Data)-aa.playProgress >= aa.period {
 				data = aa.Encoding.Data[aa.playProgress:]
 				if aa.Loop {
-					delta := aa.period - (len(aa.Encoding.Data)-aa.playProgress)
-					data = append(data, aa.Encoding.Data[:delta)
+					delta := aa.period - (len(aa.Encoding.Data) - aa.playProgress)
+					data = append(data, aa.Encoding.Data[:delta])
 				}
 			} else {
 				data = aa.Encoding.Data[aa.playProgress : aa.playProgress+aa.period]
@@ -55,7 +55,7 @@ func (aa *alsaAudio) Play() <-chan error {
 					aa.playProgress %= len(aa.Encoding.Data)
 				} else {
 					aa.playMutex.Unlock()
-					return 
+					return
 				}
 			}
 			aa.playMutex.Unlock()
@@ -107,15 +107,15 @@ func EncodeBytes(enc Encoding) (Audio, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err := handle.NegotiateFormat(format)
+	_, err = handle.NegotiateFormat(format)
 	if err != nil {
 		return nil, err
 	}
-	_, err := handle.NegotiateRate(int(enc.SampleRate))
+	_, err = handle.NegotiateRate(int(enc.SampleRate))
 	if err != nil {
 		return nil, err
 	}
-	_, err := handle.NegotiateChannels(int(enc.Channels))
+	_, err = handle.NegotiateChannels(int(enc.Channels))
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func EncodeBytes(enc Encoding) (Audio, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err := handle.NegotiateBufferSize(4096)
+	_, err = handle.NegotiateBufferSize(4096)
 	if err != nil {
 		return nil, err
 	}
