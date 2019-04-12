@@ -152,7 +152,7 @@ func EncodeBytes(enc Encoding) (Audio, error) {
 		Device:         handle,
 		period:         period,
 		stopCh:         make(chan struct{}),
-		bytesPerPeriod: period * (enc.Bits / 8),
+		bytesPerPeriod: period * (int(enc.Bits) / 8),
 	}, nil
 }
 
