@@ -3,8 +3,6 @@
 package audio
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
 	"github.com/yobert/alsa"
 )
@@ -12,12 +10,12 @@ import (
 type alsaAudio struct {
 	*Encoding
 	*alsa.Device
-	bytesPerPeriod int
-	period         int
-	playProgress   int
-	stopCh         chan struct{}
-	playing        bool
-	playCh         chan error
+	playAmount   int
+	playProgress int
+	stopCh       chan struct{}
+	playing      bool
+	playCh       chan error
+	period       int
 }
 
 func (aa *alsaAudio) Play() <-chan error {
@@ -31,14 +29,14 @@ func (aa *alsaAudio) Play() <-chan error {
 	go func() {
 		for {
 			var data []byte
-			if len(aa.Encoding.Data)-aa.playProgress <= aa.period {
+			if len(aa.Encoding.Data)-aa.playProgress <= aa.playAmount {
 				data = aa.Encoding.Data[aa.playProgress:]
 				if aa.Loop {
-					delta := aa.period - (len(aa.Encoding.Data) - aa.playProgress)
+					delta := aa.playAmount - (len(aa.Encoding.Data) - aa.playProgress)
 					data = append(data, aa.Encoding.Data[:delta]...)
 				}
 			} else {
-				data = aa.Encoding.Data[aa.playProgress : aa.playProgress+aa.period]
+				data = aa.Encoding.Data[aa.playProgress : aa.playProgress+aa.playAmount]
 			}
 			if len(data) != 0 {
 				err := aa.Device.Write(data, aa.period)
@@ -50,7 +48,7 @@ func (aa *alsaAudio) Play() <-chan error {
 					break
 				}
 			}
-			aa.playProgress += aa.period
+			aa.playProgress += aa.playAmount
 			if aa.playProgress > len(aa.Encoding.Data) {
 				if aa.Loop {
 					aa.playProgress %= len(aa.Encoding.Data)
@@ -117,10 +115,6 @@ func EncodeBytes(enc Encoding) (Audio, error) {
 	if err != nil {
 		return nil, err
 	}
-	//err := handle.Open("default", alsa.StreamTypePlayback, alsa.ModeBlock)
-	//if err != nil {
-	//	return nil, err
-	//}
 	// Todo: annotate these errors with more info
 	format, err := alsaFormat(enc.Bits)
 	if err != nil {
@@ -152,11 +146,11 @@ func EncodeBytes(enc Encoding) (Audio, error) {
 		return nil, err
 	}
 	return &alsaAudio{
-		Encoding:       &enc,
-		Device:         handle,
-		period:         period,
-		stopCh:         make(chan struct{}),
-		bytesPerPeriod: period * (int(enc.Bits) / 8),
+		playAmount: period * int(enc.Bits) / 4,
+		period:     period,
+		Encoding:   &enc,
+		Device:     handle,
+		stopCh:     make(chan struct{}),
 	}, nil
 }
 
@@ -166,14 +160,12 @@ func openDevice() (*alsa.Device, error) {
 		return nil, err
 	}
 	for i, c := range cards {
-		fmt.Println("Card", c)
 		dvcs, err := c.Devices()
 		if err != nil {
 			alsa.CloseCards([]*alsa.Card{c})
 			continue
 		}
 		for _, d := range dvcs {
-			fmt.Println("Device", d)
 			if d.Type != alsa.PCM || !d.Play {
 				continue
 			}
