@@ -3,6 +3,9 @@
 package audio
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/yobert/alsa"
 )
@@ -29,7 +32,7 @@ func (aa *alsaAudio) Play() <-chan error {
 	go func() {
 		for {
 			var data []byte
-			if len(aa.Encoding.Data)-aa.playProgress >= aa.period {
+			if len(aa.Encoding.Data)-aa.playProgress <= aa.period {
 				data = aa.Encoding.Data[aa.playProgress:]
 				if aa.Loop {
 					delta := aa.period - (len(aa.Encoding.Data) - aa.playProgress)
@@ -38,13 +41,15 @@ func (aa *alsaAudio) Play() <-chan error {
 			} else {
 				data = aa.Encoding.Data[aa.playProgress : aa.playProgress+aa.period]
 			}
-			err := aa.Device.Write(data, aa.period)
-			if err != nil {
-				select {
-				case aa.playCh <- err:
-				default:
+			if len(data) != 0 {
+				err := aa.Device.Write(data, aa.period)
+				if err != nil {
+					select {
+					case aa.playCh <- err:
+					default:
+					}
+					break
 				}
-				break
 			}
 			aa.playProgress += aa.period
 			if aa.playProgress > len(aa.Encoding.Data) {
@@ -162,23 +167,34 @@ func openDevice() (*alsa.Device, error) {
 		return nil, err
 	}
 	for i, c := range cards {
+		fmt.Println("Card", c)
 		dvcs, err := c.Devices()
 		if err != nil {
 			alsa.CloseCards([]*alsa.Card{c})
 			continue
 		}
-		for j, d := range dvcs {
+		for _, d := range dvcs {
+			fmt.Println("Device", d)
 			if d.Type != alsa.PCM || !d.Play {
-				d.Close()
 				continue
 			}
-			// We've a found a device we can hypothetically use
-			// Close all other cards and devices
-			for h := j + 1; h < len(dvcs); h++ {
-				dvcs[h].Close()
+			ech := make(chan error)
+			go func() {
+				ech <- d.Open()
+			}()
+			select {
+			case <-time.After(300 * time.Millisecond):
+				continue
+			case err := <-ech:
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
 			}
+			// We've a found a device we can hypothetically use
+			// Close all other cards
 			alsa.CloseCards(cards[i+1:])
-			return d, d.Open()
+			return d, nil
 		}
 		alsa.CloseCards([]*alsa.Card{c})
 	}
