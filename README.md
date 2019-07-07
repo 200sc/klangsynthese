@@ -5,8 +5,7 @@ Waveform and Audio Synthesis library in Go
 [![Go Report Card](https://goreportcard.com/badge/github.com/200sc/klangsynthese)](https://goreportcard.com/report/github.com/200sc/klangsynthese)
 
 Klangsynthese right now supports a number of features that will work regardless of OS,
-and a number of features specific to Windows where the hope is to move support to Linux
-and Darwin.
+with further support planned for OSX as soon as we get our hands on one to test with. 
 
 ## Usage
 
@@ -17,29 +16,22 @@ See test files.
 | OS       | Load | Modify | Save   | Play |
 | -------- | ---- | ------ | ------ | ---- |
 | Windows  | X    | X      |        |  X   |
-| Linux    | X    | X      |        |  ?   |
+| Linux    | X    | X      |        |  X   |
 | Darwin   | X    | X      |        |      |
-
-To develop with linux you'll need alsa:
-
-`sudo apt-get install alsa-base libasound2-dev`
-
-Binaries built with this will probably need alsa-base as well to run on Linux.
 
 ## Quick recipe for testing on Linux
 
 This recipe should run the wav test on Linux:
 
-    sudo apt-get install alsa-base libasound2-dev
     go get github.com/200sc/klangsynthese
-    go get github.com/stretchr/testify/assert
+    go get github.com/stretchr/testify/require
     go test github.com/200sc/klangsynthese/wav
 
 ## Other features
 
 - [x] Wav support
 - [x] Mp3 support
-- [x] Flac support?
+- [x] Flac support
 - [ ] Ogg support
 - [x] Creating waveforms (Sin, Square, Saw, ...)
 - [x] Filtering audio samples
