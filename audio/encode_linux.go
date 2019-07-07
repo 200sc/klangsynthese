@@ -4,7 +4,6 @@ package audio
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/yobert/alsa"
@@ -178,18 +177,9 @@ func openDevice() (*alsa.Device, error) {
 			if d.Type != alsa.PCM || !d.Play {
 				continue
 			}
-			ech := make(chan error)
-			go func() {
-				ech <- d.Open()
-			}()
-			select {
-			case <-time.After(300 * time.Millisecond):
+			err := d.Open()
+			if err != nil {
 				continue
-			case err := <-ech:
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
 			}
 			// We've a found a device we can hypothetically use
 			// Close all other cards
