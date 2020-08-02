@@ -5,6 +5,7 @@ package audio
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"syscall"
 
 	"github.com/oov/directsound-go/dsound"
@@ -40,7 +41,9 @@ func init() {
 	// "The operation was completed successfully" as an error!
 	// Todo: type switch? Do we know the type of "success errors"?
 	desktopWindow, _, err := getDesktopWindow.Call()
-	fmt.Println("Dsound initialization result:", err)
+	if !strings.Contains(err.Error(), "success") {
+		fmt.Println("Dsound initialization result:", err)
+	}
 	err = ds.SetCooperativeLevel(syscall.Handle(desktopWindow), dsound.DSSCL_PRIORITY)
 	if err != nil {
 		ds = nil
