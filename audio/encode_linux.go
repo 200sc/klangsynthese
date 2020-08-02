@@ -130,7 +130,16 @@ func EncodeBytes(enc Encoding) (Audio, error) {
 	}
 	_, err = handle.NegotiateChannels(int(enc.Channels))
 	if err != nil {
-		return nil, err
+		if enc.Channels == 1 {
+			// try stereo
+			enc.Channels = 2
+			_, err = handle.NegotiateChannels(int(enc.Channels))
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 	// Default value at recommendation of library
 	period, err := handle.NegotiatePeriodSize(2048)
