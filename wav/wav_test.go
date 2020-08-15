@@ -5,19 +5,23 @@ import (
 	"os"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestBasicWav(t *testing.T) {
 	fmt.Println("Running Basic Wav")
 	f, err := os.Open("test.wav")
 	fmt.Println(f)
-	require.Nil(t, err)
+	if err != nil {
+		t.Fatal("expected open err to be nil, was", err)
+	}
 	a, err := Load(f)
-	require.Nil(t, err)
+	if err != nil {
+		t.Fatal("expected load err to be nil, was", err)
+	}
 	err = <-a.Play()
-	require.Nil(t, err)
+	if err != nil {
+		t.Fatal("expected play err to be nil, was", err)
+	}
 	time.Sleep(4 * time.Second)
 	// In addition to the error tests here, this should play noise
 }
