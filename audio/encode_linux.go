@@ -3,6 +3,9 @@
 package audio
 
 import (
+	"sync"
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/yobert/alsa"
 )
@@ -130,16 +133,7 @@ func EncodeBytes(enc Encoding) (Audio, error) {
 	}
 	_, err = handle.NegotiateChannels(int(enc.Channels))
 	if err != nil {
-		if enc.Channels == 1 {
-			// try stereo
-			enc.Channels = 2
-			_, err = handle.NegotiateChannels(int(enc.Channels))
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			return nil, err
-		}
+		return nil, err
 	}
 	// Default value at recommendation of library
 	period, err := handle.NegotiatePeriodSize(2048)
@@ -163,31 +157,46 @@ func EncodeBytes(enc Encoding) (Audio, error) {
 	}, nil
 }
 
+var (
+	// Todo: support more customized audio device usage
+	openDeviceLock sync.Mutex 
+	openedDevice *alsa.Device
+)
+
 func openDevice() (*alsa.Device, error) {
+	openDeviceLock.Lock()
+	defer openDeviceLock.Unlock()
+	
+	if openedDevice != nil {
+		return openedDevice, nil
+	}
 	cards, err := alsa.OpenCards()
 	if err != nil {
 		return nil, err
 	}
+	defer alsa.CloseCards(cards)
 	for i, c := range cards {
 		dvcs, err := c.Devices()
 		if err != nil {
-			alsa.CloseCards([]*alsa.Card{c})
 			continue
 		}
 		for _, d := range dvcs {
 			if d.Type != alsa.PCM || !d.Play {
 				continue
 			}
+			if strings.Contains(d.Title, SkipDevicesContaining) {
+				continue
+			}
+			d.Close()
 			err := d.Open()
 			if err != nil {
 				continue
 			}
 			// We've a found a device we can hypothetically use
-			// Close all other cards
-			alsa.CloseCards(cards[i+1:])
+			cards = append(cards[:i], cards[i+1:]...)
+			openedDevice = d
 			return d, nil
 		}
-		alsa.CloseCards([]*alsa.Card{c})
 	}
 	return nil, errors.New("No valid device found")
 }
