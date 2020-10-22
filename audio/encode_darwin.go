@@ -20,6 +20,10 @@ func (dna *darwinNopAudio) Stop() error {
 	return errors.New("Playback on Darwin is not supported")
 }
 
+func (dna *darwinNopAudio) SetVolume(int32) error {
+	return errors.New("SetVolume on Darwin is not supported")
+}
+
 func (dna *darwinNopAudio) Filter(fs ...Filter) (Audio, error) {
 	var a Audio = dna
 	var err, consErr error

@@ -47,6 +47,16 @@ func (m *Multi) MustFilter(fs ...Filter) Audio {
 	return a
 }
 
+func (m *Multi) SetVolume(vol int32) error {
+	for _, a := range m.Audios {
+		err := a.SetVolume(vol)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Stop stops all audios in the Multi. Any that fail will report an error.
 func (m *Multi) Stop() error {
 	var err, consErr error

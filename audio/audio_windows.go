@@ -51,6 +51,14 @@ func (ds *dsAudio) Stop() error {
 	return ds.IDirectSoundBuffer.SetCurrentPosition(0)
 }
 
+// SetVolume uses an underlying directsound command to set
+// the volume of the audio. Applies multiplicatively with volume
+// filters. Accepts int32s from -10000 to 0, 0 being the max and
+// default volume.
+func (ds *dsAudio) SetVolume(vol int32) error {
+	return ds.IDirectSoundBuffer.SetVolume(vol)
+}
+
 func (ds *dsAudio) Filter(fs ...Filter) (Audio, error) {
 	var a Audio = ds
 	var err, consErr error

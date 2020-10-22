@@ -3,8 +3,8 @@
 package audio
 
 import (
-	"sync"
 	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/yobert/alsa"
@@ -90,6 +90,10 @@ func (aa *alsaAudio) Stop() error {
 	return nil
 }
 
+func (aa *alsaAudio) SetVolume(int32) error {
+	return errors.New("SetVolume on Linux is not supported")
+}
+
 func (aa *alsaAudio) Filter(fs ...Filter) (Audio, error) {
 	var a Audio = aa
 	var err, consErr error
@@ -159,14 +163,14 @@ func EncodeBytes(enc Encoding) (Audio, error) {
 
 var (
 	// Todo: support more customized audio device usage
-	openDeviceLock sync.Mutex 
-	openedDevice *alsa.Device
+	openDeviceLock sync.Mutex
+	openedDevice   *alsa.Device
 )
 
 func openDevice() (*alsa.Device, error) {
 	openDeviceLock.Lock()
 	defer openDeviceLock.Unlock()
-	
+
 	if openedDevice != nil {
 		return openedDevice, nil
 	}
